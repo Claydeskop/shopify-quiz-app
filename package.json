@@ -3,11 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
-  },
+  "dev": "next dev",
+  "build": "npm install --legacy-peer-deps && next build",
+  "start": "next start",
+  "lint": "next lint"
+},
   "dependencies": {
     "@shopify/polaris": "^13.9.5",
     "@shopify/shopify-api": "^11.13.0",
