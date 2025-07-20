@@ -4,22 +4,30 @@ import createApp from '@shopify/app-bridge';
 import { Modal, TitleBar } from '@shopify/app-bridge-react';
 import { Redirect } from '@shopify/app-bridge/actions';
 import {
-    AppProvider,
-    Box,
-    FormLayout,
-    Page,
-    Select,
-    Spinner,
-    TextField
+  AppProvider,
+  Box,
+  FormLayout,
+  Page,
+  Select,
+  Spinner,
+  TextField
 } from '@shopify/polaris';
 import enTranslations from '@shopify/polaris/locales/en.json';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 
-export default function QuizCreatePage() {
+interface AppInstance {
+  dispatch: (action: unknown) => void;
+  modal?: {
+    show: (id: string) => void;
+    hide: (id: string) => void;
+  };
+}
+
+function QuizCreateContent() {
   const searchParams = useSearchParams();
   const host = searchParams.get('host') || '';
-  const [app, setApp] = useState<any>(null);
+  const [app, setApp] = useState<AppInstance | null>(null);
   const [quizTitle, setQuizTitle] = useState('');
   const [quizDescription, setQuizDescription] = useState('');
   const [quizType, setQuizType] = useState('product-recommendation');
@@ -31,12 +39,14 @@ export default function QuizCreatePage() {
         apiKey: process.env.NEXT_PUBLIC_SHOPIFY_API_KEY,
         host,
         forceRedirect: true,
-      });
+      }) as AppInstance;
       setApp(appInstance);
 
       // Auto-open modal when page loads
       setTimeout(() => {
-        const modal = document.getElementById('create-quiz-modal') as any;
+        const modal = document.getElementById('create-quiz-modal') as HTMLElement & {
+          show?: () => void;
+        };
         if (modal && modal.show) {
           modal.show();
         }
@@ -53,7 +63,7 @@ export default function QuizCreatePage() {
     
     // Navigate back to main page
     if (app) {
-      const redirect = Redirect.create(app);
+      const redirect = Redirect.create(app as Parameters<typeof Redirect.create>[0]);
       redirect.dispatch(Redirect.Action.APP, '/?host=' + host);
     }
   };
@@ -61,7 +71,7 @@ export default function QuizCreatePage() {
   const handleCancel = () => {
     // Navigate back to main page
     if (app) {
-      const redirect = Redirect.create(app);
+      const redirect = Redirect.create(app as Parameters<typeof Redirect.create>[0]);
       redirect.dispatch(Redirect.Action.APP, '/?host=' + host);
     }
   };
@@ -129,5 +139,22 @@ export default function QuizCreatePage() {
         </Modal>
       </Page>
     </AppProvider>
+  );
+}
+
+export default function QuizCreatePage() {
+  return (
+    <Suspense fallback={
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh' 
+      }}>
+        <Spinner size="large" />
+      </div>
+    }>
+      <QuizCreateContent />
+    </Suspense>
   );
 }

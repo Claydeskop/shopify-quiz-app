@@ -1,13 +1,13 @@
 'use client';
 
 import {
-    Badge,
-    Box,
-    Button,
-    Card,
-    ChoiceList,
-    Divider,
-    Text
+  Badge,
+  Box,
+  Button,
+  Card,
+  ChoiceList,
+  Divider,
+  Text
 } from '@shopify/polaris';
 
 interface QuizFormPreviewProps {
@@ -32,8 +32,8 @@ export default function QuizFormPreview({
     return types[type] || type;
   };
 
-  const getQuizTypeColor = (type: string) => {
-    const colors: { [key: string]: any } = {
+  const getQuizTypeColor = (type: string): 'success' | 'info' | 'warning' | 'attention' => {
+    const colors: { [key: string]: 'success' | 'info' | 'warning' | 'attention' } = {
       'product-recommendation': 'success',
       'customer-survey': 'info',
       'lead-generation': 'warning',

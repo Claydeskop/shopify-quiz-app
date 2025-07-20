@@ -7,13 +7,16 @@ import {
   Button,
   Card,
   Page,
+  Spinner,
   Text
 } from '@shopify/polaris';
 import enTranslations from '@shopify/polaris/locales/en.json';
-import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { Suspense, useEffect, useState } from 'react';
 import CreateQuizModal from '../components/quiz/CreateQuizModal';
 
-export default function HomePage() {
+// SearchParams'ı ayrı component'e taşıyalım
+function AppContent() {
   const [appBridgeLoaded, setAppBridgeLoaded] = useState(false);
 
   // Manual App Bridge Loading
@@ -47,8 +50,10 @@ export default function HomePage() {
   }, [appBridgeLoaded]);
 
   const handleCreateQuiz = () => {
-    const modal = document.getElementById('create-quiz-modal') as any;
-    if (modal) modal.show();
+    const modal = document.getElementById('create-quiz-modal') as HTMLElement & {
+      show: () => void;
+    };
+    if (modal && modal.show) modal.show();
   };
 
   if (!appBridgeLoaded) {
@@ -57,7 +62,10 @@ export default function HomePage() {
         <Page title="Loading...">
           <Card>
             <Box padding="400">
-              <Text as="p">Loading App Bridge...</Text>
+              <div style={{ textAlign: 'center' }}>
+                <Spinner size="large" />
+                <Text as="p">Loading App Bridge...</Text>
+              </div>
             </Box>
           </Card>
         </Page>
@@ -69,12 +77,12 @@ export default function HomePage() {
     <AppProvider i18n={enTranslations}>
       {/* Sol Navigation Menu */}
       <NavMenu>
-        <a href="/" rel="home">🏠 Dashboard</a>
-        <a href="/quizzes">📋 My Quizzes</a>
-        <a href="/analytics">📊 Analytics</a>
-        <a href="/templates">🎨 Templates</a>
-        <a href="/settings">⚙️ Settings</a>
-        <a href="/help">❓ Help & Support</a>
+        <Link href="/" rel="home">🏠 Dashboard</Link>
+        <Link href="/quizzes">📋 My Quizzes</Link>
+        <Link href="/analytics">📊 Analytics</Link>
+        <Link href="/templates">🎨 Templates</Link>
+        <Link href="/settings">⚙️ Settings</Link>
+        <Link href="/help">❓ Help & Support</Link>
       </NavMenu>
 
       <Page 
@@ -110,5 +118,22 @@ export default function HomePage() {
         <CreateQuizModal />
       </Page>
     </AppProvider>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh' 
+      }}>
+        <Spinner size="large" />
+      </div>
+    }>
+      <AppContent />
+    </Suspense>
   );
 }

@@ -1,15 +1,15 @@
 'use client';
 
 import {
-    Box,
-    Button,
-    Card,
-    ChoiceList,
-    Divider,
-    FormLayout,
-    Select,
-    Text,
-    TextField
+  Box,
+  Button,
+  Card,
+  ChoiceList,
+  Divider,
+  FormLayout,
+  Select,
+  Text,
+  TextField
 } from '@shopify/polaris';
 
 interface QuizFormMainProps {
@@ -48,8 +48,8 @@ export default function QuizFormMain({
               <Text variant="headingLg" as="h2">
                 Basic Information
               </Text>
-              <Text variant="bodyMd"  as="p">
-                Let's start with the basics of your quiz.
+              <Text variant="bodyMd" as="p">
+                Let&apos;s start with the basics of your quiz.
               </Text>
             </Box>
 
@@ -71,7 +71,7 @@ export default function QuizFormMain({
                 placeholder="Describe what your quiz is about"
                 multiline={4}
                 autoComplete="off"
-                helpText="Tell your customers what they'll learn or discover"
+                helpText="Tell your customers what they&apos;ll learn or discover"
               />
               
               <Select
@@ -106,7 +106,7 @@ export default function QuizFormMain({
                   <FormLayout>
                     <TextField
                       label="Question Text"
-                      placeholder="What's your style preference?"
+                      placeholder="What&apos;s your style preference?"
                       autoComplete="off"
                     />
                     <TextField
@@ -176,7 +176,7 @@ export default function QuizFormMain({
                   <FormLayout>
                     <TextField
                       label="Result Title"
-                      placeholder="You're a [Result Type]!"
+                      placeholder="You&apos;re a [Result Type]!"
                       autoComplete="off"
                     />
                     <TextField

@@ -22,8 +22,10 @@ export default function CreateQuizModal() {
     console.log('Quiz created successfully!');
     
     // Modal kapat
-    const modal = document.getElementById('create-quiz-modal') as any;
-    if (modal) modal.hide();
+    const modal = document.getElementById('create-quiz-modal') as HTMLElement & {
+      hide: () => void;
+    };
+    if (modal && modal.hide) modal.hide();
     
     // Form resetle
     setQuizTitle('');
@@ -33,8 +35,10 @@ export default function CreateQuizModal() {
   };
 
   const handleCancel = () => {
-    const modal = document.getElementById('create-quiz-modal') as any;
-    if (modal) modal.hide();
+    const modal = document.getElementById('create-quiz-modal') as HTMLElement & {
+      hide: () => void;
+    };
+    if (modal && modal.hide) modal.hide();
   };
 
   return (
