@@ -1,50 +1,26 @@
-// src/app/page.tsx - Absolute URL ile fix
 'use client';
 
-import { AppProvider, Button, Layout, Page } from '@shopify/polaris';
-import { useEffect } from 'react';
+import createApp from '@shopify/app-bridge';
+import { AppProvider, Page } from '@shopify/polaris';
+import enTranslations from '@shopify/polaris/locales/en.json';
+import { useSearchParams } from 'next/navigation';
 
 export default function HomePage() {
-  useEffect(() => {
-    console.log('HomePage mounted!');
-    console.log('Current URL:', window.location.href);
-    
-    // URL'den shop parametresini manuel olarak al
-    const urlParams = new URLSearchParams(window.location.search);
-    const shop = urlParams.get('shop');
-    
-    console.log('Shop parameter:', shop);
-    
-    // Eğer shop parametresi varsa OAuth'a yönlendir
-    if (shop) {
-      console.log('Redirecting to OAuth...');
-      
-      // Absolute URL kullan
-      const currentOrigin = window.location.origin;
-      const oauthUrl = `${currentOrigin}/api/auth?shop=${shop}`;
-      
-      console.log('OAuth URL:', oauthUrl);
-      window.location.href = oauthUrl;
-      return;
-    }
-  }, []);
+  const searchParams = useSearchParams();
+  const host = searchParams.get('host') || '';
+
+  if (typeof window !== 'undefined' && host) {
+    const app = createApp({
+      apiKey: process.env.NEXT_PUBLIC_SHOPIFY_API_KEY!,
+      host,
+      forceRedirect: true,
+    });
+  }
 
   return (
-    <AppProvider i18n={{}}>
-      <Page 
-        title="Quiz Yönetimi"
-        primaryAction={
-          <Button variant="primary" tone="critical">
-            Create Quiz
-          </Button>
-        }
-      >
-        <Layout>
-          <Layout.Section>
-            <p>Quiz listesi burada görünecek...</p>
-            <p>Debug: Current URL = {typeof window !== 'undefined' ? window.location.href : 'Loading...'}</p>
-          </Layout.Section>
-        </Layout>
+    <AppProvider i18n={enTranslations}>
+      <Page title="Shopify Embedded App">
+        <p>Welcome! Your app is embedded correctly.</p>
       </Page>
     </AppProvider>
   );

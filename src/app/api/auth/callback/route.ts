@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
   }
 
-  // Başarılı! Ana sayfaya yönlendir
-  const redirectUrl = new URL('/', request.url);
+  // Shopify App sayfasına yönlendir
+  const redirectUrl = `https://${shop}/admin/apps/shopify-quiz-app`;
   return NextResponse.redirect(redirectUrl);
 }

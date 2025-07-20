@@ -2,11 +2,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const shop = searchParams.get('shop');
+  
   return NextResponse.json({
-    SHOPIFY_API_KEY: process.env.SHOPIFY_API_KEY || 'NOT_SET',
+    SHOPIFY_API_KEY: process.env.SHOPIFY_API_KEY ? 'SET' : 'NOT_SET',
+    SHOPIFY_API_SECRET: process.env.SHOPIFY_API_SECRET ? 'SET' : 'NOT_SET',
     SHOPIFY_APP_URL: process.env.SHOPIFY_APP_URL || 'NOT_SET',
     SHOPIFY_SCOPES: process.env.SHOPIFY_SCOPES || 'NOT_SET',
     SHOPIFY_HOST_NAME: process.env.SHOPIFY_HOST_NAME || 'NOT_SET',
     NODE_ENV: process.env.NODE_ENV,
+    REQUEST_URL: request.url,
+    SHOP_PARAM: shop,
+    HEADERS: Object.fromEntries(request.headers.entries()),
   });
 }
