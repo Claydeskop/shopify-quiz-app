@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "before_edit": ["npm run type-check"],
+    "after_edit": ["npm run format", "npm run lint"]
+  },
+  "context": {
+    "always_include": ["CLAUDE.md", "package.json", "next.config.js"]
+  },
+  "model": "claude-3-opus-20240229",
+  "preferences": {
+    "clear_on_new_task": true,
+    "include_file_context": true
+  }
+}
