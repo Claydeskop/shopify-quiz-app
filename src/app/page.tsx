@@ -15,10 +15,37 @@ import { useEffect, useState } from 'react';
 
 function AppContent() {
   const shopify = useAppBridge();
+  const [quizTitle, setQuizTitle] = useState('');
+  const [quizDescription, setQuizDescription] = useState('');
+  const [quizType, setQuizType] = useState('product-recommendation');
   
   const handleCreateQuiz = () => {
     shopify.modal.show('create-quiz-modal');
   };
+
+  const handleSaveQuiz = () => {
+    console.log('Creating quiz:', {
+      title: quizTitle,
+      description: quizDescription,
+      type: quizType
+    });
+    
+    // Close modal and reset form
+    shopify.modal.hide('create-quiz-modal');
+    setQuizTitle('');
+    setQuizDescription('');
+    setQuizType('product-recommendation');
+    
+    // Show success toast
+    shopify.toast.show('Quiz created successfully!');
+  };
+
+  const quizTypeOptions = [
+    { label: 'Product Recommendation', value: 'product-recommendation' },
+    { label: 'Customer Survey', value: 'customer-survey' },
+    { label: 'Lead Generation', value: 'lead-generation' },
+    { label: 'Brand Awareness', value: 'brand-awareness' }
+  ];
 
   return (
     <>
@@ -61,26 +88,20 @@ function AppContent() {
           </Box>
         </Card>
 
-        {/* Modal - Verdiğiniz örnekteki gibi */}
+        {/* Basit Modal - Orijinal Yapı */}
         <Modal id="create-quiz-modal" variant="max">
-          <div style={{ 
-            padding: '40px', 
-            textAlign: 'center', 
-            height: '400px', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center' 
-          }}>
-            <h2 style={{ fontSize: '24px', color: '#333' }}>
-              Bu boş bir max modal içeriğidir.
-            </h2>
-          </div>
+          
+          
           <TitleBar title="Create New Quiz">
-            <button variant="primary">
-              Kaydet
+            <button 
+              variant="primary" 
+              onClick={handleSaveQuiz}
+              disabled={!quizTitle.trim()}
+            >
+              Create Quiz
             </button>
             <button onClick={() => shopify.modal.hide('create-quiz-modal')}>
-              İptal
+              Cancel
             </button>
           </TitleBar>
         </Modal>
@@ -91,80 +112,88 @@ function AppContent() {
 
 export default function HomePage() {
   const [appBridgeLoaded, setAppBridgeLoaded] = useState(false);
-  const [debugInfo, setDebugInfo] = useState('Initializing...');
   const searchParams = useSearchParams();
   const host = searchParams.get('host') || '';
   const shop = searchParams.get('shop') || '';
-  
   const apiKey = process.env.NEXT_PUBLIC_SHOPIFY_API_KEY;
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    // URL debug info
-    const currentUrl = window.location.href;
-    const allParams = Object.fromEntries(searchParams.entries());
-    
-    setDebugInfo(`URL: ${currentUrl} | All Params: ${JSON.stringify(allParams)} | Host: ${host}, Shop: ${shop}, API Key: ${apiKey ? 'Set' : 'Missing'}`);
-
-    // Eğer host/shop yoksa, direkt yüklenmiş gibi davran (development için)
+    // Development mode - host/shop yoksa direkt geç
     if (!host || !shop) {
-      setDebugInfo(prev => prev + ' | Missing host/shop - assuming development mode');
+      console.log('🔧 Development mode - no host/shop params');
       setTimeout(() => setAppBridgeLoaded(true), 1000);
       return;
     }
 
-    // Önce meta tag ekle
-    if (apiKey) {
-      const existingMeta = document.querySelector('meta[name="shopify-api-key"]');
-      if (!existingMeta) {
-        const metaTag = document.createElement('meta');
-        metaTag.name = 'shopify-api-key';
-        metaTag.content = apiKey;
-        document.head.appendChild(metaTag);
-        setDebugInfo(prev => prev + ' | Meta tag added');
-      }
-    }
-
-    // Script yükle
-    const existingScript = document.querySelector('script[src*="app-bridge.js"]');
-    if (!existingScript) {
-      const script = document.createElement('script');
-      script.src = 'https://cdn.shopify.com/shopifycloud/app-bridge.js';
-      script.async = false;
-      script.defer = false;
+    // Manual script loading - Next.js Script component bazen başarısız oluyor
+    const loadAppBridge = () => {
+      // Önce mevcut script'i kontrol et
+      const existingScript = document.querySelector('script[src*="app-bridge.js"]');
       
-      script.onload = () => {
-        setDebugInfo(prev => prev + ' | Script loaded');
+      if (!existingScript) {
+        console.log('🔄 Loading App Bridge script manually...');
         
-        // window.shopify kontrol et
-        const checkShopify = () => {
-          if (window.shopify) {
-            setDebugInfo(prev => prev + ' | Shopify global found');
-            setAppBridgeLoaded(true);
-          } else {
-            setDebugInfo(prev => prev + ' | Waiting for shopify global...');
-            setTimeout(checkShopify, 100);
-          }
+        // Meta tag'i kontrol et/ekle
+        const apiKeyMeta = document.querySelector('meta[name="shopify-api-key"]');
+        if (!apiKeyMeta && apiKey) {
+          const meta = document.createElement('meta');
+          meta.name = 'shopify-api-key';
+          meta.content = apiKey;
+          document.head.appendChild(meta);
+          console.log('✅ API key meta tag added');
+        }
+        
+        // Script tag'i ekle
+        const script = document.createElement('script');
+        script.src = 'https://cdn.shopify.com/shopifycloud/app-bridge.js';
+        script.async = false;
+        script.defer = false;
+        
+        script.onload = () => {
+          console.log('✅ App Bridge script loaded');
+          checkAppBridge();
         };
         
-        setTimeout(checkShopify, 100);
-      };
-      
-      script.onerror = (error) => {
-        setDebugInfo(prev => prev + ` | Script error: ${error}`);
-      };
-      
-      document.head.appendChild(script);
-      setDebugInfo(prev => prev + ' | Script tag added');
-    } else {
-      setDebugInfo(prev => prev + ' | Script already exists');
-      // Zaten yüklendiyse direkt kontrol et
-      if (window.shopify) {
-        setAppBridgeLoaded(true);
+        script.onerror = (error) => {
+          console.error('❌ App Bridge script failed to load:', error);
+          setAppBridgeLoaded(true); // Yine de devam et
+        };
+        
+        document.head.appendChild(script);
+      } else {
+        console.log('✅ App Bridge script already exists');
+        checkAppBridge();
       }
-    }
-  }, []);
+    };
+
+    // App Bridge global'ını kontrol et
+    const checkAppBridge = () => {
+      let attempts = 0;
+      const maxAttempts = 30; // 3 saniye
+      
+      const check = () => {
+        attempts++;
+        console.log(`🔍 Checking App Bridge... (${attempts}/${maxAttempts})`);
+        
+        if (window.shopify) {
+          console.log('✅ App Bridge loaded successfully!', window.shopify);
+          setAppBridgeLoaded(true);
+        } else if (attempts >= maxAttempts) {
+          console.log('⏰ App Bridge loading timeout - proceeding anyway');
+          setAppBridgeLoaded(true);
+        } else {
+          setTimeout(check, 100);
+        }
+      };
+      
+      setTimeout(check, 100);
+    };
+
+    // Script loading'i başlat
+    setTimeout(loadAppBridge, 100);
+  }, [host, shop, apiKey]);
 
   if (!appBridgeLoaded) {
     return (
@@ -174,8 +203,8 @@ export default function HomePage() {
             <Box padding="400">
               <Text as="p">Loading App Bridge...</Text>
               <Box paddingBlockStart="200">
-                <Text as="p" variant="bodyMd">
-                  Debug: {debugInfo}
+                <Text as="p" variant="bodySm" tone="subdued">
+                  Host: {host || 'None'} | Shop: {shop || 'None'}
                 </Text>
               </Box>
             </Box>

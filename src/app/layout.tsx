@@ -25,6 +25,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <meta 
+          name="shopify-api-key" 
+          content={process.env.NEXT_PUBLIC_SHOPIFY_API_KEY || ''} 
+        />
+        {/* Manual script tag - Next.js Script component yerine */}
+        <script 
+          src="https://cdn.shopify.com/shopifycloud/app-bridge.js"
+          async={false}
+        ></script>
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
