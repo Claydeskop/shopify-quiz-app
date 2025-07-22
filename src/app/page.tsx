@@ -1,91 +1,38 @@
 'use client';
 
-import { NavMenu } from '@shopify/app-bridge-react';
+import { Modal, NavMenu, TitleBar, useAppBridge } from '@shopify/app-bridge-react';
 import {
   AppProvider,
   Box,
   Button,
   Card,
   Page,
-  Spinner,
   Text
 } from '@shopify/polaris';
 import enTranslations from '@shopify/polaris/locales/en.json';
-import Link from 'next/link';
-import { Suspense, useEffect, useState } from 'react';
-import CreateQuizModal from '../components/quiz/CreateQuizModal';
+import { useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
-// SearchParams'ı ayrı component'e taşıyalım
 function AppContent() {
-  const [appBridgeLoaded, setAppBridgeLoaded] = useState(false);
-
-  // Manual App Bridge Loading
-  useEffect(() => {
-    if (typeof window !== 'undefined' && !appBridgeLoaded) {
-      // API Key meta tag ekle
-      const apiKey = process.env.NEXT_PUBLIC_SHOPIFY_API_KEY;
-      if (apiKey) {
-        const metaTag = document.createElement('meta');
-        metaTag.name = 'shopify-api-key';
-        metaTag.content = apiKey;
-        document.head.appendChild(metaTag);
-      }
-
-      // App Bridge script yükle - ASYNC YOK!
-      const script = document.createElement('script');
-      script.src = 'https://cdn.shopify.com/shopifycloud/app-bridge.js';
-      script.async = false;
-      script.defer = false;
-      script.onload = () => {
-        console.log('App Bridge loaded successfully');
-        setTimeout(() => {
-          setAppBridgeLoaded(true);
-        }, 100);
-      };
-      script.onerror = () => {
-        console.error('Failed to load App Bridge');
-      };
-      document.head.appendChild(script);
-    }
-  }, [appBridgeLoaded]);
-
+  const shopify = useAppBridge();
+  
   const handleCreateQuiz = () => {
-    const modal = document.getElementById('create-quiz-modal') as HTMLElement & {
-      show: () => void;
-    };
-    if (modal && modal.show) modal.show();
+    shopify.modal.show('create-quiz-modal');
   };
 
-  if (!appBridgeLoaded) {
-    return (
-      <AppProvider i18n={enTranslations}>
-        <Page title="Loading...">
-          <Card>
-            <Box padding="400">
-              <div style={{ textAlign: 'center' }}>
-                <Spinner size="large" />
-                <Text as="p">Loading App Bridge...</Text>
-              </div>
-            </Box>
-          </Card>
-        </Page>
-      </AppProvider>
-    );
-  }
-
   return (
-    <AppProvider i18n={enTranslations}>
+    <>
       {/* Sol Navigation Menu */}
       <NavMenu>
-        <Link href="/" rel="home">🏠 Dashboard</Link>
-        <Link href="/quizzes">📋 My Quizzes</Link>
-        <Link href="/analytics">📊 Analytics</Link>
-        <Link href="/templates">🎨 Templates</Link>
-        <Link href="/settings">⚙️ Settings</Link>
-        <Link href="/help">❓ Help & Support</Link>
+        <a href="/" rel="home">🏠 Dashboard</a>
+        <a href="/quizzes">📋 My Quizzes</a>
+        <a href="/analytics">📊 Analytics</a>
+        <a href="/templates">🎨 Templates</a>
+        <a href="/settings">⚙️ Settings</a>
+        <a href="/help">❓ Help & Support</a>
       </NavMenu>
 
-      <Page 
+      <Page
         title="Quiz Dashboard"
         primaryAction={{
           content: 'Create Quiz',
@@ -104,8 +51,8 @@ function AppContent() {
                 Create engaging quizzes to help your customers find the perfect products and boost your sales.
               </Text>
             </Box>
-            <Button 
-              variant="primary" 
+            <Button
+              variant="primary"
               size="large"
               onClick={handleCreateQuiz}
             >
@@ -114,26 +61,133 @@ function AppContent() {
           </Box>
         </Card>
 
-        {/* Quiz Modal Component */}
-        <CreateQuizModal />
+        {/* Modal - Verdiğiniz örnekteki gibi */}
+        <Modal id="create-quiz-modal" variant="max">
+          <div style={{ 
+            padding: '40px', 
+            textAlign: 'center', 
+            height: '400px', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center' 
+          }}>
+            <h2 style={{ fontSize: '24px', color: '#333' }}>
+              Bu boş bir max modal içeriğidir.
+            </h2>
+          </div>
+          <TitleBar title="Create New Quiz">
+            <button variant="primary">
+              Kaydet
+            </button>
+            <button onClick={() => shopify.modal.hide('create-quiz-modal')}>
+              İptal
+            </button>
+          </TitleBar>
+        </Modal>
       </Page>
-    </AppProvider>
+    </>
   );
 }
 
 export default function HomePage() {
+  const [appBridgeLoaded, setAppBridgeLoaded] = useState(false);
+  const [debugInfo, setDebugInfo] = useState('Initializing...');
+  const searchParams = useSearchParams();
+  const host = searchParams.get('host') || '';
+  const shop = searchParams.get('shop') || '';
+  
+  const apiKey = process.env.NEXT_PUBLIC_SHOPIFY_API_KEY;
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // URL debug info
+    const currentUrl = window.location.href;
+    const allParams = Object.fromEntries(searchParams.entries());
+    
+    setDebugInfo(`URL: ${currentUrl} | All Params: ${JSON.stringify(allParams)} | Host: ${host}, Shop: ${shop}, API Key: ${apiKey ? 'Set' : 'Missing'}`);
+
+    // Eğer host/shop yoksa, direkt yüklenmiş gibi davran (development için)
+    if (!host || !shop) {
+      setDebugInfo(prev => prev + ' | Missing host/shop - assuming development mode');
+      setTimeout(() => setAppBridgeLoaded(true), 1000);
+      return;
+    }
+
+    // Önce meta tag ekle
+    if (apiKey) {
+      const existingMeta = document.querySelector('meta[name="shopify-api-key"]');
+      if (!existingMeta) {
+        const metaTag = document.createElement('meta');
+        metaTag.name = 'shopify-api-key';
+        metaTag.content = apiKey;
+        document.head.appendChild(metaTag);
+        setDebugInfo(prev => prev + ' | Meta tag added');
+      }
+    }
+
+    // Script yükle
+    const existingScript = document.querySelector('script[src*="app-bridge.js"]');
+    if (!existingScript) {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.shopify.com/shopifycloud/app-bridge.js';
+      script.async = false;
+      script.defer = false;
+      
+      script.onload = () => {
+        setDebugInfo(prev => prev + ' | Script loaded');
+        
+        // window.shopify kontrol et
+        const checkShopify = () => {
+          if (window.shopify) {
+            setDebugInfo(prev => prev + ' | Shopify global found');
+            setAppBridgeLoaded(true);
+          } else {
+            setDebugInfo(prev => prev + ' | Waiting for shopify global...');
+            setTimeout(checkShopify, 100);
+          }
+        };
+        
+        setTimeout(checkShopify, 100);
+      };
+      
+      script.onerror = (error) => {
+        setDebugInfo(prev => prev + ` | Script error: ${error}`);
+      };
+      
+      document.head.appendChild(script);
+      setDebugInfo(prev => prev + ' | Script tag added');
+    } else {
+      setDebugInfo(prev => prev + ' | Script already exists');
+      // Zaten yüklendiyse direkt kontrol et
+      if (window.shopify) {
+        setAppBridgeLoaded(true);
+      }
+    }
+  }, []);
+
+  if (!appBridgeLoaded) {
+    return (
+      <AppProvider i18n={enTranslations}>
+        <Page title="Loading App Bridge...">
+          <Card>
+            <Box padding="400">
+              <Text as="p">Loading App Bridge...</Text>
+              <Box paddingBlockStart="200">
+                <Text as="p" variant="bodyMd">
+                  Debug: {debugInfo}
+                </Text>
+              </Box>
+            </Box>
+          </Card>
+        </Page>
+      </AppProvider>
+    );
+  }
+
   return (
-    <Suspense fallback={
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh' 
-      }}>
-        <Spinner size="large" />
-      </div>
-    }>
+    <AppProvider i18n={enTranslations}>
       <AppContent />
-    </Suspense>
+    </AppProvider>
   );
 }
