@@ -20,3 +20,23 @@ body {
   margin: 0;
   padding: 0;
 }
+
+/* High priority modal for iframe environments */
+.shopify-app-modal {
+  z-index: 999999 !important;
+}
+
+/* Ensure modal backdrop is above iframe content */
+.shopify-app-modal .Polaris-Backdrop {
+  z-index: 999998 !important;
+}
+
+/* Modal content should be highest */
+.shopify-app-modal .Polaris-Modal {
+  z-index: 999999 !important;
+}
+
+/* Force modal to appear above everything */
+[data-portal-id] {
+  z-index: 999999 !important;
+}

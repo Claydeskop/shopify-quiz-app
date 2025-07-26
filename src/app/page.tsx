@@ -11,7 +11,8 @@ import {
 } from '@shopify/polaris';
 import enTranslations from '@shopify/polaris/locales/en.json';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import QuizBuilder from '../components/QuizBuilder';
 
 function AppContent() {
   const shopify = useAppBridge();
@@ -54,9 +55,7 @@ function AppContent() {
         <a href="/" rel="home">🏠 Dashboard</a>
         <a href="/quizzes">📋 My Quizzes</a>
         <a href="/analytics">📊 Analytics</a>
-        <a href="/templates">🎨 Templates</a>
-        <a href="/settings">⚙️ Settings</a>
-        <a href="/help">❓ Help & Support</a>
+        <a href="/templates">🎨 A/B Testing</a>
       </NavMenu>
 
       <Page
@@ -88,9 +87,16 @@ function AppContent() {
           </Box>
         </Card>
 
-        {/* Basit Modal - Orijinal Yapı */}
+        {/* Quiz Builder Modal */}
         <Modal id="create-quiz-modal" variant="max">
-          
+          <QuizBuilder
+            quizTitle={quizTitle}
+            quizDescription={quizDescription}
+            quizType={quizType}
+            onTitleChange={setQuizTitle}
+            onDescriptionChange={setQuizDescription}
+            onTypeChange={setQuizType}
+          />
           
           <TitleBar title="Create New Quiz">
             <button 
@@ -113,87 +119,37 @@ function AppContent() {
 export default function HomePage() {
   const [appBridgeLoaded, setAppBridgeLoaded] = useState(false);
   const searchParams = useSearchParams();
-  const host = searchParams.get('host') || '';
-  const shop = searchParams.get('shop') || '';
-  const apiKey = process.env.NEXT_PUBLIC_SHOPIFY_API_KEY;
+  
+  const stableHost = useMemo(() => searchParams.get('host') || '', [searchParams]);
+  const stableShop = useMemo(() => searchParams.get('shop') || '', [searchParams]); 
+  const stableApiKey = useMemo(() => process.env.NEXT_PUBLIC_SHOPIFY_API_KEY || '', []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    // Development mode - host/shop yoksa direkt geç
-    if (!host || !shop) {
+    // Development mode - no host/shop params
+    if (!stableHost || !stableShop) {
       console.log('🔧 Development mode - no host/shop params');
-      setTimeout(() => setAppBridgeLoaded(true), 1000);
+      setAppBridgeLoaded(true);
       return;
     }
 
-    // Manual script loading - Next.js Script component bazen başarısız oluyor
-    const loadAppBridge = () => {
-      // Önce mevcut script'i kontrol et
-      const existingScript = document.querySelector('script[src*="app-bridge.js"]');
+    // Wait for App Bridge script to load and initialize
+    const checkAppBridge = () => {
+      console.log('🔍 Checking for App Bridge global...');
       
-      if (!existingScript) {
-        console.log('🔄 Loading App Bridge script manually...');
-        
-        // Meta tag'i kontrol et/ekle
-        const apiKeyMeta = document.querySelector('meta[name="shopify-api-key"]');
-        if (!apiKeyMeta && apiKey) {
-          const meta = document.createElement('meta');
-          meta.name = 'shopify-api-key';
-          meta.content = apiKey;
-          document.head.appendChild(meta);
-          console.log('✅ API key meta tag added');
-        }
-        
-        // Script tag'i ekle
-        const script = document.createElement('script');
-        script.src = 'https://cdn.shopify.com/shopifycloud/app-bridge.js';
-        script.async = false;
-        script.defer = false;
-        
-        script.onload = () => {
-          console.log('✅ App Bridge script loaded');
-          checkAppBridge();
-        };
-        
-        script.onerror = (error) => {
-          console.error('❌ App Bridge script failed to load:', error);
-          setAppBridgeLoaded(true); // Yine de devam et
-        };
-        
-        document.head.appendChild(script);
+      if (window.shopify && typeof window.shopify === 'object') {
+        console.log('✅ App Bridge is ready!', Object.keys(window.shopify));
+        setAppBridgeLoaded(true);
       } else {
-        console.log('✅ App Bridge script already exists');
-        checkAppBridge();
+        console.log('⏳ Waiting for App Bridge...');
+        setTimeout(checkAppBridge, 200);
       }
     };
 
-    // App Bridge global'ını kontrol et
-    const checkAppBridge = () => {
-      let attempts = 0;
-      const maxAttempts = 30; // 3 saniye
-      
-      const check = () => {
-        attempts++;
-        console.log(`🔍 Checking App Bridge... (${attempts}/${maxAttempts})`);
-        
-        if (window.shopify) {
-          console.log('✅ App Bridge loaded successfully!', window.shopify);
-          setAppBridgeLoaded(true);
-        } else if (attempts >= maxAttempts) {
-          console.log('⏰ App Bridge loading timeout - proceeding anyway');
-          setAppBridgeLoaded(true);
-        } else {
-          setTimeout(check, 100);
-        }
-      };
-      
-      setTimeout(check, 100);
-    };
-
-    // Script loading'i başlat
-    setTimeout(loadAppBridge, 100);
-  }, [host, shop, apiKey]);
+    // Start checking after a short delay
+    setTimeout(checkAppBridge, 500);
+  }, [stableHost, stableShop, stableApiKey]);
 
   if (!appBridgeLoaded) {
     return (
@@ -204,7 +160,7 @@ export default function HomePage() {
               <Text as="p">Loading App Bridge...</Text>
               <Box paddingBlockStart="200">
                 <Text as="p" variant="bodySm" tone="subdued">
-                  Host: {host || 'None'} | Shop: {shop || 'None'}
+                  Host: {stableHost || 'None'} | Shop: {stableShop || 'None'}
                 </Text>
               </Box>
             </Box>

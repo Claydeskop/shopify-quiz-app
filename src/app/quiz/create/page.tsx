@@ -14,7 +14,7 @@ import {
 } from '@shopify/polaris';
 import enTranslations from '@shopify/polaris/locales/en.json';
 import { useSearchParams } from 'next/navigation';
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState, useMemo } from 'react';
 
 interface AppInstance {
   dispatch: (action: unknown) => void;
@@ -26,7 +26,8 @@ interface AppInstance {
 
 function QuizCreateContent() {
   const searchParams = useSearchParams();
-  const host = searchParams.get('host') || '';
+  const stableHost = useMemo(() => searchParams.get('host') || '', [searchParams]);
+  const stableApiKey = useMemo(() => process.env.NEXT_PUBLIC_SHOPIFY_API_KEY || '', []);
   const [app, setApp] = useState<AppInstance | null>(null);
   const [quizTitle, setQuizTitle] = useState('');
   const [quizDescription, setQuizDescription] = useState('');
@@ -34,10 +35,10 @@ function QuizCreateContent() {
 
   // App Bridge initialization
   useEffect(() => {
-    if (typeof window !== 'undefined' && host && process.env.NEXT_PUBLIC_SHOPIFY_API_KEY) {
+    if (typeof window !== 'undefined' && stableHost && stableApiKey) {
       const appInstance = createApp({
-        apiKey: process.env.NEXT_PUBLIC_SHOPIFY_API_KEY,
-        host,
+        apiKey: stableApiKey,
+        host: stableHost,
         forceRedirect: true,
       }) as AppInstance;
       setApp(appInstance);
@@ -52,7 +53,7 @@ function QuizCreateContent() {
         }
       }, 500);
     }
-  }, [host]);
+  }, [stableHost, stableApiKey]);
 
   const handleSaveQuiz = () => {
     console.log('Creating quiz:', {
@@ -64,7 +65,7 @@ function QuizCreateContent() {
     // Navigate back to main page
     if (app) {
       const redirect = Redirect.create(app as Parameters<typeof Redirect.create>[0]);
-      redirect.dispatch(Redirect.Action.APP, '/?host=' + host);
+      redirect.dispatch(Redirect.Action.APP, '/?host=' + stableHost);
     }
   };
 
@@ -72,7 +73,7 @@ function QuizCreateContent() {
     // Navigate back to main page
     if (app) {
       const redirect = Redirect.create(app as Parameters<typeof Redirect.create>[0]);
-      redirect.dispatch(Redirect.Action.APP, '/?host=' + host);
+      redirect.dispatch(Redirect.Action.APP, '/?host=' + stableHost);
     }
   };
 

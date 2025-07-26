@@ -30,9 +30,9 @@ export default function RootLayout({
           name="shopify-api-key" 
           content={process.env.NEXT_PUBLIC_SHOPIFY_API_KEY || ''} 
         />
-        {/* Manual script tag - Next.js Script component yerine */}
         <script 
-          src="https://cdn.shopify.com/shopifycloud/app-bridge.js"
+          src='https://cdn.shopify.com/shopifycloud/app-bridge.js'
+          defer={false}
           async={false}
         ></script>
       </head>
