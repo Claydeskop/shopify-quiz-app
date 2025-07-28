@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   const shop = searchParams.get('shop');
   const hmac = searchParams.get('hmac');
 
-  console.log('Callback received:', { code, shop, hmac });
+  console.log('OAuth callback received for shop:', shop);
 
   if (!code || !shop) {
     return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
     const accessToken = tokenData.access_token;
     const scope = tokenData.scope;
 
-    console.log('Access token received for shop:', shop);
+    console.log('Shop authentication completed for:', shop);
 
     // Save or update shop data in Supabase
     const { error } = await supabase
@@ -67,11 +67,23 @@ export async function GET(request: NextRequest) {
 
     // Set session/cookie for the shop
     const response = NextResponse.redirect(`https://${shop}/admin/apps/shopify-quiz-app`);
+    
+    // Set primary shop cookie
     response.cookies.set('shopify_shop', shop, {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
       maxAge: 60 * 60 * 24 * 30, // 30 days
+      path: '/',
+    });
+
+    // Set alternative session shop cookie for better session management
+    response.cookies.set('shopify_session_shop', shop, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      maxAge: 60 * 60 * 24 * 30, // 30 days
+      path: '/',
     });
 
     return response;

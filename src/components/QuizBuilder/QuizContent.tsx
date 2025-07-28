@@ -7,12 +7,19 @@ import QuestionBuilder from './QuestionBuilder';
 interface Question {
   id: string;
   text: string;
+  showAnswers: boolean;
+  allowMultipleSelection: boolean;
+  questionMedia: string | null;
 }
 
 interface Answer {
   id: string;
   text: string;
   questionId: string;
+  answerMedia: string | null;
+  relatedCollections: any[];
+  redirectToLink: boolean;
+  redirectUrl: string;
 }
 
 interface QuizContentProps {
@@ -87,8 +94,8 @@ export default function QuizContent({
                   style={{
                     padding: '12px 16px',
                     borderRadius: '8px',
-                    border: activeTab === 'information' ? '2px solid #007ace' : '1px solid #e1e3e5',
-                    backgroundColor: activeTab === 'information' ? '#f0f8ff' : '#fafbfb',
+                    border: (activeTab === 'information' && !selectedQuestionId && !selectedAnswerId) ? '2px solid #007ace' : '1px solid #e1e3e5',
+                    backgroundColor: (activeTab === 'information' && !selectedQuestionId && !selectedAnswerId) ? '#f0f8ff' : '#fafbfb',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
                     display: 'flex',
@@ -113,8 +120,8 @@ export default function QuizContent({
                   style={{
                     padding: '12px 16px',
                     borderRadius: '8px',
-                    border: activeTab === 'style' ? '2px solid #007ace' : '1px solid #e1e3e5',
-                    backgroundColor: activeTab === 'style' ? '#f0f8ff' : '#fafbfb',
+                    border: (activeTab === 'style' && !selectedQuestionId && !selectedAnswerId) ? '2px solid #007ace' : '1px solid #e1e3e5',
+                    backgroundColor: (activeTab === 'style' && !selectedQuestionId && !selectedAnswerId) ? '#f0f8ff' : '#fafbfb',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
                     display: 'flex',

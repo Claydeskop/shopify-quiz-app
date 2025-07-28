@@ -11,44 +11,114 @@ export interface ShopData {
 }
 
 export async function getShopFromRequest(request: NextRequest): Promise<string | null> {
-  // Try to get shop from cookie first
+  const { searchParams } = new URL(request.url);
+  
+  // Try to get shop from cookie first (most reliable for authenticated sessions)
   const shopFromCookie = request.cookies.get('shopify_shop')?.value;
-  if (shopFromCookie) {
+  if (shopFromCookie && isValidShopDomain(shopFromCookie)) {
     return shopFromCookie;
   }
 
+  // Try to get shop from session cookie (alternative session storage)
+  const sessionShop = request.cookies.get('shopify_session_shop')?.value;
+  if (sessionShop && isValidShopDomain(sessionShop)) {
+    return sessionShop;
+  }
+
   // Try to get shop from query params
-  const { searchParams } = new URL(request.url);
   const shopFromQuery = searchParams.get('shop');
-  if (shopFromQuery) {
+  if (shopFromQuery && isValidShopDomain(shopFromQuery)) {
     return shopFromQuery;
+  }
+
+  // Try to decode shop from host parameter (Shopify embedded apps)
+  const hostParam = searchParams.get('host');
+  if (hostParam) {
+    try {
+      // Decode base64 host parameter
+      const decodedHost = Buffer.from(hostParam, 'base64').toString('utf-8');
+      // Extract shop domain from decoded host (format: admin.shopify.com/store/SHOP_NAME)
+      const shopMatch = decodedHost.match(/\/store\/([^\/]+)/);
+      if (shopMatch && shopMatch[1]) {
+        const shopDomain = `${shopMatch[1]}.myshopify.com`;
+        if (isValidShopDomain(shopDomain)) {
+          return shopDomain;
+        }
+      }
+    } catch (error) {
+      console.log('Failed to decode host parameter:', error);
+    }
   }
 
   // Try to get shop from headers (for embedded apps)
   const shopFromHeader = request.headers.get('x-shopify-shop-domain');
-  if (shopFromHeader) {
+  if (shopFromHeader && isValidShopDomain(shopFromHeader)) {
     return shopFromHeader;
   }
 
-  // Development fallback - get first available shop from database
-  if (process.env.NODE_ENV === 'development') {
+  // Try to get shop from authorization header (JWT token)
+  const authHeader = request.headers.get('authorization');
+  if (authHeader && authHeader.startsWith('Bearer ')) {
     try {
-      const { data, error } = await supabase
-        .from('shops')
-        .select('shop_domain')
-        .limit(1)
-        .single();
-
-      if (!error && data) {
-        console.log('Using development fallback shop:', data.shop_domain);
-        return data.shop_domain;
+      const token = authHeader.substring(7);
+      // This could be a session token containing shop info
+      const shopFromToken = extractShopFromToken(token);
+      if (shopFromToken && isValidShopDomain(shopFromToken)) {
+        return shopFromToken;
       }
     } catch (error) {
-      console.log('No shops found in database for development fallback');
+      console.log('Failed to extract shop from auth token:', error);
     }
   }
 
+  // Try to get shop from referer header as last resort
+  const referer = request.headers.get('referer');
+  if (referer) {
+    try {
+      const refererUrl = new URL(referer);
+      const refererShop = refererUrl.searchParams.get('shop');
+      if (refererShop && isValidShopDomain(refererShop)) {
+        return refererShop;
+      }
+      
+      // Also check if referer contains embedded shop info
+      const refererHost = refererUrl.searchParams.get('host');
+      if (refererHost) {
+        const decodedHost = Buffer.from(refererHost, 'base64').toString('utf-8');
+        const shopMatch = decodedHost.match(/\/store\/([^\/]+)/);
+        if (shopMatch && shopMatch[1]) {
+          const shopDomain = `${shopMatch[1]}.myshopify.com`;
+          if (isValidShopDomain(shopDomain)) {
+            return shopDomain;
+          }
+        }
+      }
+    } catch (error) {
+      console.log('Failed to extract shop from referer:', error);
+    }
+  }
+
+  console.log('No valid shop found in request - authentication required');
   return null;
+}
+
+function extractShopFromToken(token: string): string | null {
+  try {
+    // Basic JWT decode (without verification - just for extracting shop info)
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    
+    const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
+    return payload.shop || payload.dest || null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function isValidShopDomain(shop: string): boolean {
+  // Basic validation for Shopify shop domain
+  const shopPattern = /^[a-zA-Z0-9\-]+\.myshopify\.com$/;
+  return shopPattern.test(shop);
 }
 
 export async function getAccessTokenForShop(shopDomain: string): Promise<string | null> {
@@ -75,7 +145,7 @@ export async function getShopData(shopDomain: string): Promise<ShopData | null> 
   try {
     const { data, error } = await supabase
       .from('shops')
-      .select('*')
+      .select('shop_domain, access_token, scope, installed_at, updated_at')
       .eq('shop_domain', shopDomain)
       .single();
 

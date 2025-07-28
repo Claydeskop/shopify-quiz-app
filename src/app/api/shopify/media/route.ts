@@ -64,27 +64,24 @@ async function fetchMediaFiles(shop: string, accessToken: string, request: NextR
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('Media API called - URL:', request.url);
+    console.log('Media API headers:', Object.fromEntries(request.headers.entries()));
+    console.log('Media API cookies:', Object.fromEntries(request.cookies.getAll().map(c => [c.name, c.value])));
+    
     // Validate shop access and get access token
     const { valid, shop, accessToken, error } = await validateShopAccess(request);
     
+    console.log('Shop validation result:', { valid, shop: shop || 'NO SHOP', hasToken: !!accessToken, error });
+    
     if (!valid || !shop || !accessToken) {
-      // Development fallback - use environment variables if no OAuth setup yet
-      if (process.env.NODE_ENV === 'development') {
-        const fallbackDomain = process.env.SHOPIFY_STORE_DOMAIN;
-        const fallbackToken = process.env.SHOPIFY_ACCESS_TOKEN;
-        
-        if (fallbackDomain && fallbackToken) {
-          console.log('Using development fallback credentials');
-          return await fetchMediaFiles(fallbackDomain, fallbackToken, request);
-        }
-      }
-      
+      console.log('Authentication failed - returning 401');
       return NextResponse.json(
         { error: error || 'Unauthorized access. Please complete OAuth flow first.' },
         { status: 401 }
       );
     }
 
+    console.log('Authentication successful - fetching media for shop:', shop);
     return await fetchMediaFiles(shop, accessToken, request);
   } catch (error) {
     console.error('Error fetching Shopify media:', error);

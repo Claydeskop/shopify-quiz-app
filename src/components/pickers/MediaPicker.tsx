@@ -7,7 +7,8 @@ import {
   Text,
   Thumbnail
 } from '@shopify/polaris';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import MediaPickerModal from './MediaPickerModal';
 
 interface MediaPickerProps {
   selectedMedia: string | null;
@@ -16,29 +17,21 @@ interface MediaPickerProps {
 }
 
 export default function MediaPicker({ selectedMedia, onMediaSelect, onMediaRemove }: MediaPickerProps) {
-
-  useEffect(() => {
-    // Listen for messages from modal
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data?.type === 'MEDIA_SELECTION') {
-        console.log('Received media selection:', event.data.selection);
-        onMediaSelect(event.data.selection.url);
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [onMediaSelect]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleOpenPicker = () => {
-    console.log('Opening media picker in new window...');
-    const popup = window.open('/media-picker-modal', 'mediaPickerModal', 'width=800,height=600,scrollbars=yes,resizable=yes');
-    
-    if (popup) {
-      // Focus the popup window
-      popup.focus();
-    }
+    setIsModalOpen(true);
   };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleMediaSelect = (mediaUrl: string) => {
+    onMediaSelect(mediaUrl);
+    setIsModalOpen(false);
+  };
+
   return (
     <Box>
       <Text variant='headingSm' as='h4'>Quiz Image</Text>
@@ -84,6 +77,36 @@ export default function MediaPicker({ selectedMedia, onMediaSelect, onMediaRemov
         </div>
       </Box>
 
+      {/* Media Picker Modal */}
+      {isModalOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            width: '90%',
+            maxWidth: '800px',
+            maxHeight: '90%',
+            overflow: 'hidden',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+          }}>
+            <MediaPickerModal
+              onMediaSelect={handleMediaSelect}
+              onCancel={handleModalClose}
+            />
+          </div>
+        </div>
+      )}
     </Box>
   );
 }

@@ -1,0 +1,239 @@
+'use client';
+
+import {
+  Badge,
+  Box,
+  Button,
+  Card,
+  InlineStack,
+  Text,
+  BlockStack,
+  Divider
+} from '@shopify/polaris';
+import { useEffect, useState } from 'react';
+
+interface Quiz {
+  id: string;
+  title: string;
+  quiz_type: string;
+  slug: string;
+  is_active: boolean;
+  internal_quiz_title: string;
+  internal_quiz_description: string;
+  created_at: string;
+  updated_at: string;
+  questionCount: number;
+  answerCount: number;
+}
+
+interface QuizListProps {
+  onEditQuiz?: (quizId: string) => void;
+  onDeleteQuiz?: (quizId: string) => void;
+}
+
+interface LoadingStates {
+  [quizId: string]: boolean;
+}
+
+export default function QuizList({ onEditQuiz, onDeleteQuiz }: QuizListProps) {
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [loadingStates, setLoadingStates] = useState<LoadingStates>({});
+
+  const fetchQuizzes = async () => {
+    try {
+      setLoading(true);
+      
+      // Get shop domain from session
+      const sessionResponse = await fetch('/api/session');
+      const sessionData = await sessionResponse.json();
+      
+      if (!sessionResponse.ok || !sessionData.shopDomain) {
+        throw new Error('Shop domain alınamadı');
+      }
+
+      const response = await fetch('/api/quiz/list', {
+        headers: {
+          'x-shopify-shop-domain': sessionData.shopDomain
+        }
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setQuizzes(result.quizzes || []);
+        setError(null);
+      } else {
+        setError(result.error || 'Failed to fetch quizzes');
+      }
+    } catch (err) {
+      console.error('Quiz fetch error:', err);
+      setError('Failed to load quizzes');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchQuizzes();
+  }, []);
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('tr-TR', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getQuizTypeLabel = (type: string) => {
+    const types: Record<string, string> = {
+      'product-recommendation': 'Ürün Önerisi',
+      'customer-survey': 'Müşteri Anketi', 
+      'lead-generation': 'Potansiyel Müşteri',
+      'brand-awareness': 'Marka Bilinirliği'
+    };
+    return types[type] || type;
+  };
+
+  if (loading) {
+    return (
+      <Card>
+        <Box padding="400">
+          <Text as="p">Quiz'ler yükleniyor...</Text>
+        </Box>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <Box padding="400">
+          <BlockStack gap="300">
+            <Text as="p" tone="critical">
+              Hata: {error}
+            </Text>
+            <Button onClick={fetchQuizzes}>Tekrar Dene</Button>
+          </BlockStack>
+        </Box>
+      </Card>
+    );
+  }
+
+  if (quizzes.length === 0) {
+    return (
+      <Card>
+        <Box padding="400">
+          <BlockStack gap="300">
+            <Text variant="headingMd" as="h3">
+              Henüz Quiz Yok
+            </Text>
+            <Text as="p" tone="subdued">
+              İlk quiz'inizi oluşturmak için yukarıdaki "Create Quiz" butonunu kullanın.
+            </Text>
+          </BlockStack>
+        </Box>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <Box padding="400">
+        <BlockStack gap="400">
+          <Text variant="headingMd" as="h3">
+            Mevcut Quiz'ler ({quizzes.length})
+          </Text>
+
+          <BlockStack gap="300">
+            {quizzes.map((quiz, index) => (
+              <div key={quiz.id}>
+                <Box padding="300">
+                  <BlockStack gap="300">
+                    {/* Quiz Header */}
+                    <InlineStack align="space-between">
+                      <BlockStack gap="100">
+                        <InlineStack gap="200" align="start">
+                          <Text variant="headingSm" as="h4">
+                            {quiz.title}
+                          </Text>
+                          <Badge tone={quiz.is_active ? 'success' : 'subdued'}>
+                            {quiz.is_active ? 'Aktif' : 'Pasif'}
+                          </Badge>
+                        </InlineStack>
+                        <Text as="p" tone="subdued" variant="bodySm">
+                          {quiz.internal_quiz_description}
+                        </Text>
+                      </BlockStack>
+                      
+                      {/* Action Buttons */}
+                      <InlineStack gap="200">
+                        {onEditQuiz && (
+                          <Button
+                            size="micro"
+                            loading={loadingStates[quiz.id]}
+                            disabled={loadingStates[quiz.id]}
+                            onClick={async () => {
+                              setLoadingStates(prev => ({ ...prev, [quiz.id]: true }));
+                              try {
+                                await onEditQuiz(quiz.id);
+                              } finally {
+                                setLoadingStates(prev => ({ ...prev, [quiz.id]: false }));
+                              }
+                            }}
+                          >
+                            Düzenle
+                          </Button>
+                        )}
+                        {onDeleteQuiz && (
+                          <Button
+                            size="micro"
+                            variant="primary"
+                            tone="critical"
+                            onClick={() => onDeleteQuiz(quiz.id)}
+                          >
+                            Sil
+                          </Button>
+                        )}
+                      </InlineStack>
+                    </InlineStack>
+
+                    {/* Quiz Details */}
+                    <InlineStack gap="400">
+                      <Text as="p" variant="bodySm">
+                        <strong>Tür:</strong> {getQuizTypeLabel(quiz.quiz_type)}
+                      </Text>
+                      <Text as="p" variant="bodySm">
+                        <strong>Soru:</strong> {quiz.questionCount}
+                      </Text>
+                      <Text as="p" variant="bodySm">
+                        <strong>Cevap:</strong> {quiz.answerCount}
+                      </Text>
+                      <Text as="p" variant="bodySm" tone="subdued">
+                        <strong>Oluşturulma:</strong> {formatDate(quiz.created_at)}
+                      </Text>
+                    </InlineStack>
+
+                    {/* Quiz Settings Info */}
+                    <InlineStack gap="200">
+                      <Badge tone="subdued">
+                        Slug: /{quiz.slug}
+                      </Badge>
+                    </InlineStack>
+                  </BlockStack>
+                </Box>
+
+                {/* Divider between quizzes */}
+                {index < quizzes.length - 1 && <Divider />}
+              </div>
+            ))}
+          </BlockStack>
+        </BlockStack>
+      </Box>
+    </Card>
+  );
+}

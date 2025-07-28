@@ -40,3 +40,8 @@ body {
 [data-portal-id] {
   z-index: 999999 !important;
 }
+
+/* Hide scrollbar for quiz settings */
+.quiz-settings-scroll::-webkit-scrollbar {
+  display: none;
+}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, forwardRef, useImperativeHandle } from 'react';
 import QuizContent from './QuizContent';
 import QuizPreview from './QuizPreview';
 import QuizSettings from './QuizSettings';
@@ -8,38 +8,66 @@ import QuizSettings from './QuizSettings';
 interface Question {
   id: string;
   text: string;
+  showAnswers: boolean;
+  allowMultipleSelection: boolean;
+  questionMedia: string | null;
 }
 
 interface Answer {
   id: string;
   text: string;
   questionId: string;
+  answerMedia: string | null;
+  relatedCollections: any[];
+  redirectToLink: boolean;
+  redirectUrl: string;
+  metafieldConditions: any[];
 }
 
 interface QuizBuilderProps {
   quizTitle: string;
-  quizDescription: string;
   quizType: string;
   onTitleChange: (value: string) => void;
-  onDescriptionChange: (value: string) => void;
   onTypeChange: (value: string) => void;
 }
 
-export default function QuizBuilder(props: QuizBuilderProps) {
+const QuizBuilder = forwardRef<any, QuizBuilderProps>((props, ref) => {
   const [activeTab, setActiveTab] = useState('information');
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<Answer[]>([]);
   const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null);
   const [selectedAnswerId, setSelectedAnswerId] = useState<string | null>(null);
+  
+  // Quiz settings state
+  const [internalQuizTitle, setInternalQuizTitle] = useState<string>('Bu quiz hangi ürün size en uygun olduğunu bulmanıza yardımcı olacak');
+  const [internalQuizDescription, setInternalQuizDescription] = useState<string>('Kişisel tercihlerinizi ve ihtiyaçlarınızı anlayarak size özel ürün önerileri sunuyoruz. Sadece birkaç soruyu yanıtlayın ve size en uygun seçenekleri keşfedin.');
+  const [quizImage, setQuizImage] = useState<string | null>(null);
+  
+  // Save state
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [saveToast, setSaveToast] = useState<{
+    active: boolean;
+    message: string;
+    error: boolean;
+  }>({
+    active: false,
+    message: '',
+    error: false
+  });
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
+    setSelectedQuestionId(null);
+    setSelectedAnswerId(null);
   };
 
   const handleQuestionAdd = () => {
     const newQuestion: Question = {
       id: `question-${Date.now()}`,
-      text: 'What is your question?'
+      text: 'What is your question?',
+      showAnswers: true,
+      allowMultipleSelection: false,
+      questionMedia: null,
     };
     setQuestions(prev => [...prev, newQuestion]);
     setSelectedQuestionId(newQuestion.id);
@@ -72,7 +100,12 @@ export default function QuizBuilder(props: QuizBuilderProps) {
     const newAnswer: Answer = {
       id: `answer-${Date.now()}`,
       text: 'Enter answer option',
-      questionId
+      questionId,
+      answerMedia: null,
+      relatedCollections: [],
+      redirectToLink: false,
+      redirectUrl: '',
+      metafieldConditions: []
     };
     setAnswers(prev => [...prev, newAnswer]);
     setSelectedAnswerId(newAnswer.id);
@@ -107,6 +140,147 @@ export default function QuizBuilder(props: QuizBuilderProps) {
     );
   };
 
+
+
+  const handleInternalQuizTitleChange = (value: string) => {
+    setInternalQuizTitle(value);
+  };
+
+  const handleInternalQuizDescriptionChange = (value: string) => {
+    setInternalQuizDescription(value);
+  };
+
+  const handleQuizImageChange = (imageUrl: string | null) => {
+    setQuizImage(imageUrl);
+  };
+
+  // Question settings handlers
+  const handleQuestionShowAnswersChange = (questionId: string, value: boolean) => {
+    setQuestions(prev => 
+      prev.map(q => q.id === questionId ? { ...q, showAnswers: value } : q)
+    );
+  };
+
+  const handleQuestionAllowMultipleSelectionChange = (questionId: string, value: boolean) => {
+    setQuestions(prev => 
+      prev.map(q => q.id === questionId ? { ...q, allowMultipleSelection: value } : q)
+    );
+  };
+
+  const handleQuestionMediaChange = (questionId: string, mediaUrl: string | null) => {
+    setQuestions(prev => 
+      prev.map(q => q.id === questionId ? { ...q, questionMedia: mediaUrl } : q)
+    );
+  };
+
+  // Answer settings handlers
+  const handleAnswerMediaChange = (answerId: string, mediaUrl: string | null) => {
+    setAnswers(prev => 
+      prev.map(a => a.id === answerId ? { ...a, answerMedia: mediaUrl } : a)
+    );
+  };
+
+  const handleAnswerCollectionsChange = (answerId: string, collections: any[]) => {
+    setAnswers(prev => 
+      prev.map(a => a.id === answerId ? { ...a, relatedCollections: collections } : a)
+    );
+  };
+
+  const handleAnswerRedirectToLinkChange = (answerId: string, value: boolean) => {
+    setAnswers(prev => 
+      prev.map(a => a.id === answerId ? { ...a, redirectToLink: value } : a)
+    );
+  };
+
+  const handleAnswerRedirectUrlChange = (answerId: string, url: string) => {
+    setAnswers(prev => 
+      prev.map(a => a.id === answerId ? { ...a, redirectUrl: url } : a)
+    );
+  };
+
+  const handleAnswerMetafieldConditionsChange = (answerId: string, conditions: any[]) => {
+    setAnswers(prev => 
+      prev.map(a => a.id === answerId ? { ...a, metafieldConditions: conditions } : a)
+    );
+  };
+
+  const handleSaveQuiz = async () => {
+    try {
+      setIsSaving(true);
+      
+      // Get shop domain from session
+      const sessionResponse = await fetch('/api/session');
+      const sessionData = await sessionResponse.json();
+      
+      if (!sessionResponse.ok || !sessionData.shopDomain) {
+        throw new Error('Shop domain alınamadı');
+      }
+      
+      const quizData = {
+        title: props.quizTitle,
+        description: props.quizDescription,
+        quizType: props.quizType,
+        internalQuizTitle,
+        internalQuizDescription,
+        questions,
+        answers
+      };
+
+      const response = await fetch('/api/quiz/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-shopify-shop-domain': sessionData.shopDomain
+        },
+        body: JSON.stringify(quizData)
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setSaveToast({
+          active: true,
+          message: 'Quiz başarıyla kaydedildi!',
+          error: false
+        });
+      } else {
+        throw new Error(result.error || 'Kaydetme işlemi başarısız');
+      }
+    } catch (error) {
+      console.error('Save error:', error);
+      setSaveToast({
+        active: true,
+        message: error instanceof Error ? error.message : 'Quiz kaydedilirken hata oluştu',
+        error: true
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const loadQuizData = (quizData: any) => {
+    setQuestions(quizData.questions || []);
+    setAnswers(quizData.answers || []);
+    setInternalQuizTitle(quizData.internalQuizTitle || '');
+    setInternalQuizDescription(quizData.internalQuizDescription || '');
+    setQuizImage(quizData.quizImage || null);
+    setSelectedQuestionId(null);
+    setSelectedAnswerId(null);
+    setActiveTab('information');
+  };
+
+  // Expose methods to parent component
+  useImperativeHandle(ref, () => ({
+    getQuizData: () => ({
+      internalQuizTitle,
+      internalQuizDescription,
+      quizImage,
+      questions,
+      answers
+    }),
+    loadQuizData
+  }), [internalQuizTitle, internalQuizDescription, quizImage, questions, answers]);
+
   return (
     <div style={{ 
       display: 'flex', 
@@ -135,7 +309,19 @@ export default function QuizBuilder(props: QuizBuilderProps) {
       
       {/* Middle Column - 60% */}
       <div style={{ width: '60%', height: '100%' }}>
-        <QuizPreview {...props} />
+        <QuizPreview 
+          {...props}
+          activeTab={activeTab}
+          questions={questions}
+          answers={answers}
+          selectedQuestionId={selectedQuestionId}
+          selectedAnswerId={selectedAnswerId}
+          internalQuizTitle={internalQuizTitle}
+          internalQuizDescription={internalQuizDescription}
+          quizImage={quizImage}
+          onQuestionSelect={handleQuestionSelect}
+          onTabChange={handleTabChange}
+        />
       </div>
       
       {/* Right Column - 20% */}
@@ -148,8 +334,30 @@ export default function QuizBuilder(props: QuizBuilderProps) {
           answers={answers}
           onQuestionTextChange={handleQuestionTextChange}
           onAnswerTextChange={handleAnswerTextChange}
+          quizName={props.quizTitle}
+          quizTitle={internalQuizTitle}
+          quizImage={quizImage}
+          onQuizNameChange={props.onTitleChange}
+          onQuizTitleChange={handleInternalQuizTitleChange}
+          onQuizImageChange={handleQuizImageChange}
+          internalQuizTitle={internalQuizTitle}
+          internalQuizDescription={internalQuizDescription}
+          onInternalQuizTitleChange={handleInternalQuizTitleChange}
+          onInternalQuizDescriptionChange={handleInternalQuizDescriptionChange}
+          onQuestionShowAnswersChange={handleQuestionShowAnswersChange}
+          onQuestionAllowMultipleSelectionChange={handleQuestionAllowMultipleSelectionChange}
+          onQuestionMediaChange={handleQuestionMediaChange}
+          onAnswerMediaChange={handleAnswerMediaChange}
+          onAnswerCollectionsChange={handleAnswerCollectionsChange}
+          onAnswerRedirectToLinkChange={handleAnswerRedirectToLinkChange}
+          onAnswerRedirectUrlChange={handleAnswerRedirectUrlChange}
+          onAnswerMetafieldConditionsChange={handleAnswerMetafieldConditionsChange}
         />
       </div>
     </div>
   );
-}
+});
+
+QuizBuilder.displayName = 'QuizBuilder';
+
+export default QuizBuilder;

@@ -1,414 +1,445 @@
-# Shopify Product Finder Quiz App - Database Architecture
+# Shopify Quiz App - Database Architecture v2.0
 
-## 📋 Overview
+## =� Overview
 
-Bu doküman, Shopify Product Finder Quiz uygulaması için tasarlanan veritabanı mimarisini detaylandırır. Sistem, Supabase PostgreSQL veritabanı kullanarak quiz oluşturma, kullanıcı yanıtlarını takip etme ve ürün önerilerini yönetme işlevlerini destekler.
+Bu dok�man, Shopify Product Finder Quiz uygulamas1 i�in yeniden tasarlanan veritaban1 mimarisini detayland1r1r. Yeni mimari, frontend Quiz Builder ile tam uyumlu olacak _ekilde tasarlanm1_t1r ve Supabase PostgreSQL kullan1r.
 
-## 🏗️ Architecture Principles
+## <� Design Goals
 
-### 1. **Minimize Data Duplication**
-- Shopify'dan çekilebilecek veriler (collections, products, metafields) veritabanında saklanmaz
-- Sadece referans ID'leri tutulur, detaylar runtime'da API'den çekilir
+### 1. **Frontend-Backend Full Compatibility**
+- Frontend interface'leri ile veritaban1 _emas1 1:1 uyumlu
+- TypeScript tiplerinden dorudan SQL mapping
+- API response'lar1 frontend beklentileri ile tam e_le_me
 
-### 2. **Optimize for Performance**  
-- Quiz yapısı için JSON fields kullanılır (styles, settings)
-- Gerekli indexler tanımlanmıştır
-- RLS (Row Level Security) shop bazında isolation sağlar
+### 2. **Performance Optimized**
+- Strategic indexing for quiz loading ve analytics
+- JSON fields for flexible configuration
+- RLS policies for multi-tenant security
 
-### 3. **Analytics-First Design**
-- Her kullanıcı etkileşimi track edilir
-- Conversion funnel analizi için gerekli veriler saklanır
-- Günlük summary tablolar performansı artırır
+### 3. **Analytics-Ready**
+- Complete user journey tracking
+- Conversion funnel analysis
+- Daily aggregation for dashboard performance
 
-## 📊 Table Structure
+## <� Core Architecture
 
-### Core Tables
+### Data Flow
+```
+Frontend Quiz Builder � API Route � Database Schema � Analytics Pipeline
+```
 
-#### 1. `quizzes` - Ana Quiz Konfigürasyonu
+### Table Categories
+1. **Core Tables**: quizzes, questions, answers
+2. **Relationship Tables**: answer_collections, metafield_conditions  
+3. **Session Tables**: quiz_sessions, user_responses
+4. **Analytics Tables**: product_recommendations, conversion_events, analytics_daily
+
+## =� Table Structure
+
+### 1. `quizzes` - Ana Quiz Konfig�rasyonu
 ```sql
 quizzes {
   id: UUID (PK)
-  shop_domain: VARCHAR(255) -- "mystore.myshopify.com"
-  title: VARCHAR(255)
-  description: TEXT
-  image_url: TEXT -- CDN'de saklanan custom görsel
+  shop_domain: VARCHAR(255) -- RLS isolation
+  title: VARCHAR(255) -- QuizData.title
+  description: TEXT -- QuizData.description
+  quiz_type: VARCHAR(50) -- QuizData.quizType
   slug: VARCHAR(255) UNIQUE
   is_active: BOOLEAN
-  shopify_collection_ids: TEXT[] -- ['123', '456'] Shopify koleksiyon ID'leri
-  styles: JSONB -- UI stil ayarları
-  settings: JSONB -- Quiz davranış ayarları
+  
+  -- Frontend mapping
+  show_start_button: BOOLEAN -- QuizData.showStartButton
+  internal_quiz_title: TEXT -- QuizData.internalQuizTitle
+  internal_quiz_description: TEXT -- QuizData.internalQuizDescription
+  
+  -- Configuration
+  styles: JSONB -- UI customization
+  settings: JSONB -- Behavior settings
+  shopify_collection_ids: TEXT[] -- Related collections
+  
+  created_at: TIMESTAMP
+  updated_at: TIMESTAMP
 }
 ```
 
-**Key Points:**
-- `shop_domain`: RLS için kritik field
-- `shopify_collection_ids`: Array olarak saklanır, runtime'da collection detayları çekilir
-- `styles`: Tüm CSS/UI konfigürasyonu JSON'da
-- `settings`: Progress bar, navigation, randomization etc.
+**Key Features:**
+- Direct mapping to frontend `QuizData` interface
+- JSON fields for flexible configuration
+- Array field for collection references
 
-#### 2. `questions` - Sorular
+### 2. `questions` - Quiz Sorular1
 ```sql
 questions {
   id: UUID (PK)
   quiz_id: UUID (FK -> quizzes.id)
-  title: TEXT
-  description: TEXT
-  image_url: TEXT -- CDN'de saklanan custom görsel
+  
+  -- Frontend Question interface mapping
+  text: TEXT -- Question.text
+  show_answers: BOOLEAN -- Question.showAnswers
+  allow_multiple_selection: BOOLEAN -- Question.allowMultipleSelection
+  show_answer_images: BOOLEAN -- Question.showAnswerImages
+  question_media: TEXT -- Question.questionMedia (CDN URL)
+  
+  -- UI and ordering
   question_order: INTEGER
   is_required: BOOLEAN
   is_skippable: BOOLEAN
-  allow_multiple_selection: BOOLEAN
   auto_advance: BOOLEAN
-  show_option_images: BOOLEAN
-  styles: JSONB -- Soru seviyesi stil overrides
+  styles: JSONB -- Question-level style overrides
+  
+  created_at: TIMESTAMP
 }
 ```
 
-**Key Points:**
-- `question_order`: Sıralama için kritik
-- Boolean fields quiz davranışını kontrol eder
-- `styles`: Quiz styles'ı override edebilir
+**Frontend Compatibility:**
+- Complete `Question` interface mapping
+- All boolean flags preserved
+- Media URL storage for CDN integration
 
-#### 3. `options` - Soru Seçenekleri
+### 3. `answers` - Soru Cevaplar1
 ```sql
-options {
+answers {
   id: UUID (PK)
   question_id: UUID (FK -> questions.id)
-  text: VARCHAR(500)
-  image_url: TEXT -- CDN'de saklanan custom görsel
-  option_order: INTEGER
+  
+  -- Frontend Answer interface mapping
+  text: VARCHAR(500) -- Answer.text
+  answer_media: TEXT -- Answer.answerMedia (CDN URL)
+  redirect_to_link: BOOLEAN -- Answer.redirectToLink
+  redirect_url: TEXT -- Answer.redirectUrl
+  
+  -- UI and scoring
+  answer_order: INTEGER
   is_default: BOOLEAN
-  weight: INTEGER -- Skorlama için
+  weight: INTEGER -- For recommendation algorithm
+  
+  created_at: TIMESTAMP
 }
 ```
 
-**Key Points:**
-- `weight`: Recommendation algoritmasında kullanılır
-- `option_order`: UI'da görünüm sırası
-- `is_default`: Pre-selected seçenekler için
+**New Features:**
+- `redirect_to_link` and `redirect_url` support
+- Direct mapping to `Answer` interface
+- Scoring weight for recommendations
 
-#### 4. `option_metafield_rules` - Metafield Eşleştirme Kuralları
+### 4. `answer_collections` - Answer-Collection 0li_kisi
 ```sql
-option_metafield_rules {
+answer_collections {
   id: UUID (PK)
-  option_id: UUID (FK -> options.id)
-  metafield_namespace: VARCHAR(255) -- 'custom', 'global'
-  metafield_key: VARCHAR(255) -- 'color', 'size', 'material'
-  operator: VARCHAR(20) -- 'equals', 'contains', 'in_array'
-  expected_value: TEXT -- 'red', 'large', '["red","blue"]'
-  weight: INTEGER -- Bu kuralın önem derecesi
+  answer_id: UUID (FK -> answers.id)
+  shopify_collection_id: VARCHAR(255) -- Shopify collection reference
+  collection_order: INTEGER -- Display order
+  
+  created_at: TIMESTAMP
+  
+  UNIQUE(answer_id, shopify_collection_id)
 }
 ```
 
-**Key Points:**
-- Shopify metafield'ları referans eder, value'lar saklamaz
-- `operator`: Flexible matching rules
-- `expected_value`: JSON string olabilir (array values için)
-- `weight`: Multiple metafield matches için scoring
+**Purpose:**
+- Maps to frontend `Answer.relatedCollections`
+- Many-to-many relationship between answers and collections
+- Ordered collection associations
 
-### Session & Response Tables
+### 5. `metafield_conditions` - Metafield E_le_tirme
+```sql
+metafield_conditions {
+  id: UUID (PK)
+  answer_id: UUID (FK -> answers.id)
+  
+  -- Metafield reference
+  metafield_namespace: VARCHAR(255) -- 'custom', 'global'
+  metafield_key: VARCHAR(255) -- 'color', 'size'
+  metafield_name: VARCHAR(255) -- Display name
+  metafield_type: VARCHAR(50) -- 'single_line_text_field'
+  
+  -- Matching rule
+  operator: VARCHAR(20) -- 'equals', 'not_equals'
+  expected_value: TEXT -- Match value
+  weight: INTEGER -- Rule importance
+  
+  created_at: TIMESTAMP
+}
+```
 
-#### 5. `quiz_sessions` - Kullanıcı Oturumları
+**Frontend Mapping:**
+- Direct mapping to `Answer.metafieldConditions`
+- Support for complex metafield matching
+- Weighted scoring for recommendation algorithm
+
+### 6. `quiz_sessions` - Kullan1c1 Oturumlar1
 ```sql
 quiz_sessions {
   id: UUID (PK)
   quiz_id: UUID (FK -> quizzes.id)
-  session_token: VARCHAR(255) UNIQUE -- Frontend generates
-  shopify_customer_id: VARCHAR(255) -- Optional, logged-in users
-  customer_email: VARCHAR(255) -- Optional
+  
+  -- Session tracking
+  session_token: VARCHAR(255) UNIQUE -- Frontend generated
+  shopify_customer_id: VARCHAR(255) -- Logged-in users
+  customer_email: VARCHAR(255)
+  
+  -- Analytics data
   user_agent: TEXT
   ip_address: INET
   referrer: TEXT
-  utm_source/medium/campaign: VARCHAR(255) -- Marketing attribution
+  utm_source/medium/campaign: VARCHAR(255)
+  
+  -- Lifecycle
   is_completed: BOOLEAN
   started_at: TIMESTAMP
   completed_at: TIMESTAMP
+  total_score: INTEGER
 }
 ```
 
-**Key Points:**
-- `session_token`: Frontend-generated unique ID
-- UTM fields: Marketing campaign tracking
-- `shopify_customer_id`: Connect to Shopify customer data when available
-
-#### 6. `quiz_responses` - Kullanıcı Cevapları
+### 7. `user_responses` - Kullan1c1 Cevaplar1
 ```sql
-quiz_responses {
+user_responses {
   id: UUID (PK)
   session_id: UUID (FK -> quiz_sessions.id)
   question_id: UUID (FK -> questions.id)
-  option_id: UUID (FK -> options.id)
-  response_time_ms: INTEGER -- UX analytics
+  answer_id: UUID (FK -> answers.id)
+  
+  -- Analytics
+  response_time_ms: INTEGER
   was_skipped: BOOLEAN
+  responded_at: TIMESTAMP
+  
+  UNIQUE(session_id, question_id, answer_id)
 }
 ```
 
-**Key Points:**
-- UNIQUE constraint: `(session_id, question_id, option_id)`
-- `response_time_ms`: User engagement metrics
-- Multiple responses per question allowed (if `allow_multiple_selection`)
-
-### Recommendation & Analytics Tables
-
-#### 7. `product_recommendations` - Önerilen Ürünler
+### 8. `product_recommendations` - �neri Sonu�lar1
 ```sql
 product_recommendations {
   id: UUID (PK)
   session_id: UUID (FK -> quiz_sessions.id)
-  shopify_product_id: VARCHAR(255) -- Shopify product referansı
-  shopify_variant_id: VARCHAR(255) -- Specific variant
-  match_score: DECIMAL(5,2) -- 0-100 matching score
-  recommendation_order: INTEGER -- Display order
-  algorithm_version: VARCHAR(50) -- A/B testing için
-  matching_details: JSONB -- Debug/analysis için hangi kurallar match etti
+  
+  -- Shopify references
+  shopify_product_id: VARCHAR(255)
+  shopify_variant_id: VARCHAR(255)
+  
+  -- Recommendation data
+  match_score: DECIMAL(5,2) -- 0-100 score
+  recommendation_order: INTEGER
+  algorithm_version: VARCHAR(50)
+  matching_details: JSONB -- Debug info
+  
+  created_at: TIMESTAMP
 }
 ```
 
-**Key Points:**
-- Product detayları Shopify'dan çekilir, sadece ID'ler saklanır
-- `match_score`: Algorithm output, sorting için
-- `matching_details`: Transparency ve debugging için
-- `algorithm_version`: A/B testing ve iterasyon için
-
-#### 8. `conversion_tracking` - Dönüşüm Takibi
+### 9. `conversion_events` - D�n�_�m Takibi
 ```sql
-conversion_tracking {
+conversion_events {
   id: UUID (PK)
   session_id: UUID (FK -> quiz_sessions.id)
   recommendation_id: UUID (FK -> product_recommendations.id)
-  event_type: VARCHAR(50) -- Event taxonomy
+  
+  -- Event data
+  event_type: VARCHAR(50) -- 'view', 'click', 'add_to_cart', 'purchase'
   shopify_product_id: VARCHAR(255)
   shopify_variant_id: VARCHAR(255)
-  shopify_order_id: VARCHAR(255) -- Purchase events için
+  shopify_order_id: VARCHAR(255)
+  
+  -- Commerce data
   quantity: INTEGER
   revenue: DECIMAL(10,2)
-  event_data: JSONB -- Additional metadata
+  event_data: JSONB
+  
+  created_at: TIMESTAMP
 }
 ```
 
-**Event Types:**
-- `recommendation_view`: Recommendation sonuçları gösterildi
-- `product_click`: Specific ürüne tıklandı
-- `add_to_cart`: Sepete eklendi
-- `purchase`: Satın alındı (Shopify webhook'dan)
-
-#### 9. `analytics_summary` - Günlük Özet İstatistikler
+### 10. `analytics_daily` - G�nl�k 0statistikler
 ```sql
-analytics_summary {
+analytics_daily {
   id: UUID (PK)
   quiz_id: UUID (FK -> quizzes.id)
   date: DATE
+  
+  -- Traffic metrics
   total_starts: INTEGER
   total_completions: INTEGER
   completion_rate: DECIMAL(5,2)
   avg_completion_time_seconds: INTEGER
+  
+  -- Engagement metrics
   total_recommendation_views: INTEGER
   total_product_clicks: INTEGER
   total_add_to_carts: INTEGER
   total_purchases: INTEGER
   total_revenue: DECIMAL(10,2)
+  
+  -- Conversion rates
   click_through_rate: DECIMAL(5,2)
   add_to_cart_rate: DECIMAL(5,2)
   purchase_rate: DECIMAL(5,2)
+  
+  UNIQUE(quiz_id, date)
 }
 ```
 
-**Key Points:**
-- Daily aggregation table
-- Günlük cron job ile populate edilir
-- Dashboard performansını artırır
-- Historical trend analysis için
+## = Security & Performance
 
-## 🔄 Business Logic Flow
-
-### 1. Quiz Creation Flow
-```
-1. Admin creates quiz with title, description, collections
-2. Add questions with text/images
-3. Add options with text/images  
-4. Define metafield rules for each option
-5. Configure styles and settings
-6. Activate quiz
-```
-
-### 2. User Quiz Taking Flow  
-```
-1. User visits quiz URL (slug-based)
-2. Create quiz_session with session_token
-3. Display questions sequentially
-4. Save each response to quiz_responses
-5. Calculate recommendations based on metafield rules
-6. Save recommendations to product_recommendations
-7. Mark session as completed
-8. Track user interactions with conversion_tracking
-```
-
-### 3. Recommendation Algorithm
-```javascript
-// Pseudo-code for recommendation logic
-function calculateRecommendations(sessionId) {
-  // 1. Get user responses
-  const responses = getSessionResponses(sessionId);
-  
-  // 2. Get quiz collections
-  const quiz = getQuizWithCollections(responses.quiz_id);
-  
-  // 3. Fetch products from Shopify
-  const products = await shopify.getProductsByCollections(quiz.shopify_collection_ids);
-  
-  // 4. Score each product
-  const scoredProducts = products.map(product => {
-    let score = 0;
-    
-    responses.forEach(response => {
-      const rules = getMetafieldRules(response.option_id);
-      
-      rules.forEach(rule => {
-        const productMetafield = product.metafields.find(m => 
-          m.namespace === rule.metafield_namespace && 
-          m.key === rule.metafield_key
-        );
-        
-        if (productMetafield && matchesRule(productMetafield.value, rule)) {
-          score += rule.weight * response.option.weight;
-        }
-      });
-    });
-    
-    return { product, score };
-  });
-  
-  // 5. Sort by score and save recommendations
-  return scoredProducts
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 10) // Top 10
-    .map((item, index) => ({
-      shopify_product_id: item.product.id,
-      match_score: item.score,
-      recommendation_order: index + 1
-    }));
-}
-```
-
-## 🔗 External API Integrations
-
-### Shopify Admin API Calls
-```javascript
-// Collections
-GET /admin/api/2023-10/collections.json
-
-// Products by collection
-GET /admin/api/2023-10/collections/{collection_id}/products.json
-
-// Product metafields
-GET /admin/api/2023-10/products/{product_id}/metafields.json
-
-// Customer data (for logged-in users)
-GET /admin/api/2023-10/customers/{customer_id}.json
-```
-
-### CDN/File Storage
-- Quiz, question, option images → Upload to CDN (Vercel, Cloudinary etc.)
-- Store only CDN URLs in database
-- Shopify product images → Use Shopify CDN URLs directly
-
-## 📈 Performance Considerations
-
-### Indexing Strategy
+### Row Level Security (RLS)
 ```sql
--- Critical indexes for quiz loading
-CREATE INDEX idx_quizzes_shop_domain ON quizzes(shop_domain);
-CREATE INDEX idx_quizzes_slug ON quizzes(slug);
-CREATE INDEX idx_questions_quiz_order ON questions(quiz_id, question_order);
-
--- Analytics indexes
-CREATE INDEX idx_quiz_sessions_date ON quiz_sessions(started_at);
-CREATE INDEX idx_conversion_tracking_event_type ON conversion_tracking(event_type);
-
--- GIN index for array searches
-CREATE INDEX idx_quizzes_collections ON quizzes USING gin(shopify_collection_ids);
-```
-
-### Query Optimization
-- Use `complete_quiz_structure` view for frontend quiz loading
-- Implement pagination for analytics dashboards
-- Cache Shopify API responses (Redis recommended)
-- Batch Shopify API calls where possible
-
-### RLS (Row Level Security)
-```sql
--- Shop isolation
-CREATE POLICY "shop_isolation" ON quizzes
-  FOR ALL USING (shop_domain = current_setting('app.shop_domain', true));
+-- Shop isolation for all administrative tables
+CREATE POLICY "shop_isolation_quizzes" ON quizzes
+    FOR ALL USING (shop_domain = current_setting('app.shop_domain', true));
 
 -- Public access for active quizzes
 CREATE POLICY "public_quiz_access" ON quizzes
-  FOR SELECT USING (is_active = true);
+    FOR SELECT USING (is_active = true);
 ```
 
-## 🚀 Deployment Considerations
+### Critical Indexes
+```sql
+-- Performance indexes
+CREATE INDEX idx_quizzes_shop_domain ON quizzes(shop_domain);
+CREATE INDEX idx_questions_quiz_order ON questions(quiz_id, question_order);
+CREATE INDEX idx_answers_question_order ON answers(question_id, answer_order);
 
-### Supabase Setup
-1. Create project and database
-2. Run schema SQL scripts
-3. Configure RLS policies
-4. Set environment variables
+-- Analytics indexes
+CREATE INDEX idx_quiz_sessions_token ON quiz_sessions(session_token);
+CREATE INDEX idx_conversion_events_type ON conversion_events(event_type);
 
-### Environment Variables
+-- JSON indexes
+CREATE INDEX idx_quizzes_collections_gin ON quizzes USING gin(shopify_collection_ids);
+```
+
+## = API Integration
+
+### Save Quiz Flow
+```typescript
+// Frontend � API � Database mapping
+const quizData = {
+  title: "Product Finder Quiz",
+  description: "Find your perfect product",
+  showStartButton: true,
+  questions: [...],
+  answers: [...]
+};
+
+// API saves to:
+// 1. quizzes table
+// 2. questions table  
+// 3. answers table
+// 4. answer_collections table
+// 5. metafield_conditions table
+```
+
+### Quiz Loading Flow
+```sql
+-- Single query to load complete quiz structure
+SELECT 
+  q.*,
+  json_agg(DISTINCT questions.*) as questions,
+  json_agg(DISTINCT answers.*) as answers
+FROM quizzes q
+LEFT JOIN questions ON q.id = questions.quiz_id
+LEFT JOIN answers ON questions.id = answers.question_id
+WHERE q.slug = $1 AND q.is_active = true
+GROUP BY q.id;
+```
+
+## =� Analytics Pipeline
+
+### Real-time Tracking
+1. **Session Start**: Create `quiz_sessions` record
+2. **Each Response**: Insert into `user_responses`
+3. **Quiz Complete**: Generate `product_recommendations`
+4. **User Interactions**: Track in `conversion_events`
+
+### Daily Aggregation
+```sql
+-- Cron job to populate analytics_daily
+INSERT INTO analytics_daily (quiz_id, date, total_starts, ...)
+SELECT 
+  quiz_id,
+  DATE(started_at),
+  COUNT(*) as total_starts,
+  ...
+FROM quiz_sessions
+WHERE DATE(started_at) = CURRENT_DATE - INTERVAL '1 day'
+GROUP BY quiz_id, DATE(started_at);
+```
+
+## =� Deployment Guide
+
+### 1. Database Setup
+```bash
+# Run the schema creation
+psql -h [supabase-url] -d postgres -f database-schema.sql
+```
+
+### 2. Environment Variables
 ```env
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
-SHOPIFY_APP_API_KEY=
-SHOPIFY_APP_SECRET=
-SHOPIFY_SCOPES="read_products,read_collections,read_customers"
+NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=xxx
+SUPABASE_SERVICE_ROLE_KEY=xxx
 ```
 
-### Monitoring & Observability
-- Database performance metrics
-- Shopify API rate limits
-- Quiz completion rates
-- Conversion tracking accuracy
+### 3. API Route Updates
+Update `src/app/api/quiz/save/route.ts` to use new schema:
+- Map to new table names (`answers` instead of `options`)
+- Handle `answer_collections` and `metafield_conditions`
+- Support new fields (`redirect_to_link`, `show_answers`)
 
-## 🔮 Future Enhancements
+## <� Frontend Integration Benefits
+
+### 1. **Type Safety**
+```typescript
+// Direct interface mapping
+interface Question {
+  showAnswers: boolean; //  maps to questions.show_answers
+  allowMultipleSelection: boolean; //  maps to questions.allow_multiple_selection
+}
+```
+
+### 2. **No Data Transformation**
+- Frontend sends data � API saves directly
+- Database loads data � Frontend renders directly
+- Zero mapping overhead
+
+### 3. **Feature Complete**
+-  All frontend features supported
+-  Redirect functionality
+-  Collection relationships
+-  Metafield conditions
+-  Media URL storage
+
+## =. Future Enhancements
 
 ### Phase 2 Features
-- A/B testing for quiz flows
-- Advanced segmentation rules
-- Email capture and follow-up
-- Multi-language support
+- Multi-language support (i18n tables)
+- A/B testing framework
+- Advanced analytics dashboard
+- Email capture integration
 - Custom CSS injection
 
-### Analytics Enhancements
-- Heat mapping for questions
-- Drop-off analysis
-- Cohort analysis
-- Revenue attribution
-
 ### Performance Optimizations
-- GraphQL for Shopify queries
+- Read replicas for analytics
 - Redis caching layer
-- CDN for static assets
-- Database read replicas
+- CDN integration for media
+- Database connection pooling
 
 ---
 
-## 📝 Notes for Development
+## =� Migration Notes
 
-### Critical Database Operations
-1. **Quiz Creation**: Always create questions and options in transaction
-2. **Session Management**: Handle session timeouts and cleanup
-3. **Analytics Aggregation**: Daily cron jobs for summary tables
-4. **Rate Limiting**: Implement for Shopify API calls
+### From Old Schema
+1. Backup existing data (if any)
+2. Drop old tables (keeping shops)
+3. Run new schema creation
+4. Update API routes to use new table names
+5. Test complete flow
 
-### Testing Strategy
-- Unit tests for recommendation algorithm
-- Integration tests for Shopify API calls
-- Load testing for quiz taking flow
-- E2E tests for complete user journey
-
-### Security Considerations
-- Validate all user inputs
-- Sanitize image uploads
-- Rate limit quiz submissions
-- Monitor for abuse patterns
+### Validation Checklist
+- [ ] Quiz creation works with all fields
+- [ ] Question ordering preserved
+- [ ] Answer media URLs saved
+- [ ] Collection relationships created
+- [ ] Metafield conditions saved
+- [ ] RLS policies working
+- [ ] Analytics tracking functional

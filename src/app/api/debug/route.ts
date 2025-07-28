@@ -2,6 +2,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
+  // Only allow debug endpoints in development
+  if (process.env.NODE_ENV !== 'development') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+  
   const { searchParams } = new URL(request.url);
   const shop = searchParams.get('shop');
   
@@ -14,6 +19,7 @@ export async function GET(request: NextRequest) {
     NODE_ENV: process.env.NODE_ENV,
     REQUEST_URL: request.url,
     SHOP_PARAM: shop,
+    // Only expose headers in development
     HEADERS: Object.fromEntries(request.headers.entries()),
   });
 }
