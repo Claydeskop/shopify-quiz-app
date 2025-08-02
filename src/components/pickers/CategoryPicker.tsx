@@ -167,7 +167,7 @@ export default function CategoryPicker({ selectedCategories, onCategoriesChange 
               {category && (
                 <Box paddingBlockStart='200'>
                   <Text variant='bodySm' tone='subdued'>
-                    Find products with category: <strong>"{category}"</strong>
+                    Find products with category: <strong>&quot;{category}&quot;</strong>
                   </Text>
                 </Box>
               )}

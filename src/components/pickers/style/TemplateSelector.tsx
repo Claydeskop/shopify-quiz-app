@@ -408,7 +408,7 @@ export default function TemplateSelector({ onTemplateSelect }: TemplateSelectorP
               size="slim"
               variant="primary"
             >
-              Bu Template'i Kullan
+              Bu Template&apos;i Kullan
             </Button>
           </div>
         </Card>
@@ -417,7 +417,7 @@ export default function TemplateSelector({ onTemplateSelect }: TemplateSelectorP
       <Card>
         <div style={{ padding: '16px' }}>
           <Text variant='bodySm' color='subdued'>
-            💡 <strong>Not:</strong> Template seçtiğinizde mevcut tüm stil ayarlarınız silinecek ve seçtiğiniz template'in ayarları yüklenecektir.
+            💡 <strong>Not:</strong> Template seçtiğinizde mevcut tüm stil ayarlarınız silinecek ve seçtiğiniz template&apos;in ayarları yüklenecektir.
           </Text>
         </div>
       </Card>

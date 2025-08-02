@@ -167,7 +167,7 @@ export default function TagPicker({ selectedTags, onTagsChange }: TagPickerProps
               {tag && (
                 <Box paddingBlockStart='200'>
                   <Text variant='bodySm' tone='subdued'>
-                    Find products with tag: <strong>"{tag}"</strong>
+                    Find products with tag: <strong>&quot;{tag}&quot;</strong>
                   </Text>
                 </Box>
               )}

@@ -283,7 +283,7 @@ export default function MetafieldPicker({ conditions, onConditionsChange }: Meta
                     <Text variant='bodySm' tone='subdued'>
                       Find products where <strong>{condition.metafield.namespace}.{condition.metafield.key}</strong> {' '}
                       <strong>{condition.operator === 'equals' ? 'equals' : 'does not equal'}</strong> {' '}
-                      <strong>"{condition.value}"</strong>
+                      <strong>&quot;{condition.value}&quot;</strong>
                     </Text>
                   </Box>
                 )}

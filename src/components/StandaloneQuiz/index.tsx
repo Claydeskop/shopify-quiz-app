@@ -357,7 +357,7 @@ export default function StandaloneQuiz({
             transition: 'all 0.3s ease',
           }}
         >
-          🚀 Quiz'i Başlat
+          🚀 Quiz&apos;i Başlat
         </motion.button>
       )}
     </motion.div>
@@ -659,7 +659,7 @@ export default function StandaloneQuiz({
         maxWidth: '400px',
         lineHeight: '1.6',
       }}>
-        Tebrikler! Quiz'i başarıyla tamamladınız.
+        Tebrikler! Quiz&apos;i başarıyla tamamladınız.
       </p>
       
       <button

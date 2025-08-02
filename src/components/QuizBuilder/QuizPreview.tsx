@@ -538,7 +538,7 @@ export default function QuizPreview({
                 if (shimmer) shimmer.style.left = '-100%';
               }}
             >
-              <span style={{ position: 'relative', zIndex: 1 }}>🚀 Quiz'i Başlat</span>
+              <span style={{ position: 'relative', zIndex: 1 }}>🚀 Quiz&apos;i Başlat</span>
               <div style={{
                 position: 'absolute',
                 top: 0,
@@ -577,7 +577,7 @@ export default function QuizPreview({
               fontSize: '1rem',
               margin: 0 
             }}>
-              Quiz'inize soru ekleyerek başlayın
+              Quiz&apos;inize soru ekleyerek başlayın
             </p>
           </motion.div>
         )}

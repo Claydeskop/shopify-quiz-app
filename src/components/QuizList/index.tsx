@@ -119,7 +119,7 @@ export default function QuizList({ onEditQuiz, onDeleteQuiz }: QuizListProps) {
     return (
       <Card>
         <Box padding="400">
-          <Text as="p">Quiz'ler yükleniyor...</Text>
+          <Text as="p">Quiz&apos;ler yükleniyor...</Text>
         </Box>
       </Card>
     );
@@ -149,7 +149,7 @@ export default function QuizList({ onEditQuiz, onDeleteQuiz }: QuizListProps) {
               Henüz Quiz Yok
             </Text>
             <Text as="p" tone="subdued">
-              İlk quiz'inizi oluşturmak için yukarıdaki "Create Quiz" butonunu kullanın.
+              İlk quiz&apos;inizi oluşturmak için yukarıdaki &quot;Create Quiz&quot; butonunu kullanın.
             </Text>
           </BlockStack>
         </Box>
@@ -162,7 +162,7 @@ export default function QuizList({ onEditQuiz, onDeleteQuiz }: QuizListProps) {
       <Box padding="400">
         <BlockStack gap="400">
           <Text variant="headingMd" as="h3">
-            Mevcut Quiz'ler ({quizzes.length})
+            Mevcut Quiz&apos;ler ({quizzes.length})
           </Text>
 
           <BlockStack gap="300">
