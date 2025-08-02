@@ -237,3 +237,6 @@ export async function makeShopifyRequest(
     headers,
   });
 }
+
+// Alias for backward compatibility
+export const getShopifyAccessToken = getAccessTokenForShop;

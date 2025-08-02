@@ -4,7 +4,10 @@
     "allow": [
       "Bash(npm run build:*)",
       "WebFetch(domain:polaris-react.shopify.com)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(rmdir:*)",
+      "Bash(rm:*)",
+      "Bash(npx next:*)"
     ],
     "deny": []
   }

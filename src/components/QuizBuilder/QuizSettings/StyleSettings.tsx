@@ -2,7 +2,7 @@
 
 import { Text, Collapsible, Card, BlockStack, Button, Icon } from '@shopify/polaris';
 import { useState, useEffect, useRef } from 'react';
-import { CodeMajor, ChevronDownMinor, ChevronUpMinor } from '@shopify/polaris-icons';
+import { CodeIcon, ChevronDownIcon, ChevronUpIcon } from '@shopify/polaris-icons';
 
 import GeneralSettings from '../../pickers/style/GeneralSettings';
 import IntroScreenSettings from '../../pickers/style/IntroScreenSettings';
@@ -396,7 +396,7 @@ export default function StyleSettingsComponent({ styles, onStyleChange }: StyleS
                 }}
               >
                 <Text variant='headingXs' as='h5'>{section.title}</Text>
-                <Icon source={isActive ? ChevronUpMinor : ChevronDownMinor} />
+                <Icon source={isActive ? ChevronUpIcon : ChevronDownIcon} />
               </button>
               
               <Collapsible open={isActive}>
@@ -416,7 +416,7 @@ export default function StyleSettingsComponent({ styles, onStyleChange }: StyleS
       <Card>
         <BlockStack gap="400">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Icon source={CodeMajor} />
+            <Icon source={CodeIcon} />
             <Text variant='headingXs' as='h5'>Özel CSS</Text>
           </div>
           

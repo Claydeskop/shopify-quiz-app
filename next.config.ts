@@ -21,10 +21,8 @@ const nextConfig: NextConfig = {
     ];
   },
   
-  // Experimental features for better Shopify integration
-  experimental: {
-    serverComponentsExternalPackages: ['@shopify/shopify-api'],
-  },
+  // Server external packages for better Shopify integration
+  serverExternalPackages: ['@shopify/shopify-api'],
 };
 
 export default nextConfig;
