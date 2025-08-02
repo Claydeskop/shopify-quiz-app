@@ -1,6 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase';
 
+interface AnswerData {
+  id: string;
+  text: string;
+  answer_media: string;
+  collections: unknown[];
+  categories: unknown[];
+  products: unknown[];
+  tags: unknown[];
+}
+
+interface QuestionData {
+  id: string;
+  text: string;
+  question_media: string;
+  show_answers: boolean;
+  allow_multiple_selection: boolean;
+  answers?: AnswerData[];
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { slug: string } }
@@ -48,13 +67,13 @@ export async function GET(
         image: quiz.quiz_image || null,
         slug: quiz.slug,
         style_settings: quiz.styles,
-        questions: quiz.questions?.map((question: { id: string; text: string; question_media: string; show_answers: boolean; allow_multiple_selection: boolean; answers?: Array<{ id: string; text: string; answer_media: string; collections: any[]; categories: any[]; products: any[]; tags: any[] }> }) => ({
+        questions: quiz.questions?.map((question: QuestionData) => ({
           id: question.id,
           text: question.text,
           questionMedia: question.question_media,
           showAnswers: question.show_answers,
           allowMultipleSelection: question.allow_multiple_selection,
-          answers: question.answers?.map((answer: { id: string; text: string; answer_media: string; collections: any[]; categories: any[]; products: any[]; tags: any[] }) => ({
+          answers: question.answers?.map((answer: AnswerData) => ({
             id: answer.id,
             text: answer.text,
             answerMedia: answer.answer_media,

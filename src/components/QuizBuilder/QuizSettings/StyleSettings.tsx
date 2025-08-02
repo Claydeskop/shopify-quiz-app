@@ -450,7 +450,7 @@ export default function StyleSettingsComponent({ styles, onStyleChange }: StyleS
       {/* Template Selector - Always visible */}
       <Card>
         <BlockStack gap="400">
-          <Text variant='headingXs' as='h5'>Mevcut Template'ler</Text>
+          <Text variant='headingXs' as='h5'>Mevcut Template&apos;ler</Text>
           <TemplateSelector 
             onTemplateSelect={(templateStyles) => {
               if (window.confirm('Emin misiniz? Mevcut ayarlarınız silinip seçtiğiniz template ayarları eklenecektir.')) {

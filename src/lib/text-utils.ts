@@ -6,12 +6,14 @@ import React from 'react';
 /**
  * Component for displaying text with properly escaped entities
  */
-export const EscapedText = ({ children }: { children: string }) => {
+export const EscapedText: React.FC<{ children: string }> = ({ children }) => {
   const escapedText = children
     .replace(/'/g, '&apos;')
     .replace(/"/g, '&quot;');
   
-  return <span dangerouslySetInnerHTML={{ __html: escapedText }} />;
+  return React.createElement('span', { 
+    dangerouslySetInnerHTML: { __html: escapedText } 
+  });
 };
 
 /**
