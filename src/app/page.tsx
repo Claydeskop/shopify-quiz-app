@@ -126,7 +126,17 @@ function AppContent() {
       const sessionResponse = await fetch('/api/session');
       const sessionData = await sessionResponse.json();
       
-      if (!sessionResponse.ok || !sessionData.shopDomain) {
+      if (!sessionResponse.ok) {
+        throw new Error('Session alınamadı');
+      }
+      
+      if (sessionData.requiresAuth && sessionData.installUrl) {
+        // OAuth required, redirect to install URL
+        window.top!.location.href = sessionData.installUrl;
+        return;
+      }
+      
+      if (!sessionData.shopDomain) {
         throw new Error('Shop domain alınamadı');
       }
 
@@ -170,7 +180,10 @@ function AppContent() {
             answers: [],
             internalQuizTitle: 'Bu quiz hangi ürün size en uygun olduğunu bulmanıza yardımcı olacak',
             internalQuizDescription: 'Kişisel tercihlerinizi ve ihtiyaçlarınızı anlayarak size özel ürün önerileri sunuyoruz. Sadece birkaç soruyu yanıtlayın ve size en uygun seçenekleri keşfedin.',
-            quizImage: null
+            quizImage: null,
+            is_active: false,
+            auto_transition: false,
+            selected_collections: []
           });
         }
         

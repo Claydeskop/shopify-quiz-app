@@ -1,0 +1,516 @@
+{{ 'quiz-button.css' | asset_url | stylesheet_tag }}
+
+<div class="quiz-button-container" data-quiz-slug="{{ block.settings.quiz_slug }}">
+  <button 
+    class="quiz-button-main"
+    data-quiz-slug="{{ block.settings.quiz_slug }}"
+    style="
+      --button-bg-color: {{ block.settings.button_color }};
+      --button-text-color: {{ block.settings.text_color }};
+      --button-border-color: {{ block.settings.border_color }};
+      --button-border-width: {{ block.settings.border_width }}px;
+      --button-border-radius: {{ block.settings.border_radius }}px;
+      --button-padding: {{ block.settings.button_padding }}px;
+      --button-font-size: {{ block.settings.font_size }}px;
+    "
+  >
+    {{ block.settings.button_text | default: 'Quiz Başlat' }}
+  </button>
+</div>
+
+<!-- Quiz Modal -->
+<div id="quiz-modal" class="quiz-modal" style="display: none;">
+  <div class="quiz-modal-content">
+    <div id="quiz-container"></div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    // Quiz modal functionality
+    let currentQuiz = null;
+    let currentView = 'info';
+    let currentQuestionIndex = 0;
+    let selectedAnswers = [];
+    let allAnswers = {};
+
+    // Default styles
+    const defaultStyles = {
+      backgroundColor: '#2c5aa0',
+      optionBackgroundColor: '#ffffff',
+      titleFontSize: 32,
+      questionFontSize: 24,
+      optionFontSize: 18,
+      quizBorderRadius: 24,
+      optionBorderRadius: 12,
+      quizBorderWidth: 0,
+      quizBorderColor: '#ffffff',
+      optionBorderWidth: 2,
+      optionBorderColor: '#ffffff',
+      buttonColor: '#ff6b6b',
+      customCSS: ''
+    };
+
+    // Initialize when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+      initializeQuizButtons();
+    });
+
+    function initializeQuizButtons() {
+      const quizButtons = document.querySelectorAll('.quiz-button-main');
+      quizButtons.forEach(button => {
+        button.addEventListener('click', function() {
+          const slug = this.getAttribute('data-quiz-slug');
+          if (slug && slug.trim() !== '') {
+            openQuizModal(slug.trim());
+          } else {
+            alert('Quiz slug belirtilmemiş! Lütfen quiz ayarlarını kontrol edin.');
+          }
+        });
+      });
+    }
+
+    async function openQuizModal(slug) {
+      const modal = document.getElementById('quiz-modal');
+      const container = document.getElementById('quiz-container');
+      
+      // Show modal
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+      
+      try {
+        // Show loading
+        container.innerHTML = getLoadingHTML();
+        
+        // Fetch quiz data (fallback to direct API if proxy fails)
+        const proxyUrl = `/apps/quiz-app/api/quiz/public/${slug}`;
+        const directUrl = `https://giant-heads-relate.loca.lt/api/proxy/quiz/public/${slug}`;
+        
+        let url = proxyUrl;
+        console.log('Trying proxy URL first:', url);
+        
+        let response = await fetch(url);
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
+        
+        // If proxy fails, try direct API
+        if (!response.ok) {
+          console.log('Proxy failed, trying direct URL:', directUrl);
+          url = directUrl;
+          response = await fetch(url);
+          console.log('Direct API response status:', response.status);
+          console.log('Direct API response ok:', response.ok);
+        }
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Error response:', errorText);
+          throw new Error('Quiz bulunamadı veya aktif değil');
+        }
+
+        const data = await response.json();
+        
+        if (data.success && data.quiz) {
+          currentQuiz = data.quiz;
+          currentView = 'info';
+          currentQuestionIndex = 0;
+          selectedAnswers = [];
+          allAnswers = {};
+          renderQuiz();
+        } else {
+          throw new Error(data.error || 'Quiz yüklenemedi');
+        }
+      } catch (error) {
+        console.error('Quiz loading error:', error);
+        container.innerHTML = getErrorHTML(error.message);
+      }
+    }
+
+    function closeQuizModal() {
+      const modal = document.getElementById('quiz-modal');
+      modal.style.display = 'none';
+      document.body.style.overflow = '';
+      currentQuiz = null;
+    }
+
+    function getLoadingHTML() {
+      return `
+        <div class="quiz-loading">
+          <div class="quiz-loading-spinner"></div>
+          <p>Quiz yükleniyor...</p>
+        </div>
+      `;
+    }
+
+    function getErrorHTML(message) {
+      return `
+        <div class="quiz-error">
+          <div class="quiz-error-icon">❌</div>
+          <p>${message}</p>
+          <button onclick="closeQuizModal()" class="quiz-error-button">Kapat</button>
+        </div>
+      `;
+    }
+
+    function renderQuiz() {
+      const container = document.getElementById('quiz-container');
+      const styles = { ...defaultStyles, ...(currentQuiz.style_settings || {}) };
+      
+      let content = '';
+      
+      if (currentView === 'info') {
+        content = renderQuizInfo(styles);
+      } else if (currentView === 'question') {
+        content = renderQuestion(styles);
+      } else if (currentView === 'result') {
+        content = renderResult(styles);
+      }
+      
+      container.innerHTML = `
+        <div class="quiz-wrapper">
+          <!-- Close Button -->
+          <button class="quiz-close-btn" onclick="closeQuizModal()">×</button>
+          
+          ${content}
+          
+          ${currentView !== 'result' ? renderNavigation() : ''}
+        </div>
+        
+        <style>
+          ${styles.customCSS || ''}
+        </style>
+      `;
+      
+      // Add event listeners after rendering
+      addEventListeners();
+    }
+
+    function renderQuizInfo(styles) {
+      return `
+        <div class="quiz-info" style="
+          background: ${styles.backgroundColor};
+          border-radius: ${styles.quizBorderRadius}px;
+          border: ${styles.quizBorderWidth > 0 ? `${styles.quizBorderWidth}px solid ${styles.quizBorderColor}` : 'none'};
+        ">
+          ${currentQuiz.image ? `
+            <div class="quiz-image">
+              <img src="${currentQuiz.image}" alt="Quiz image" />
+            </div>
+          ` : ''}
+          
+          <h1 class="quiz-title" style="font-size: ${styles.titleFontSize}px;">
+            ${currentQuiz.title}
+          </h1>
+          
+          ${currentQuiz.description ? `
+            <p class="quiz-description">${currentQuiz.description}</p>
+          ` : ''}
+          
+          ${currentQuiz.questions.length > 0 ? `
+            <button class="quiz-start-btn" data-action="start" style="background: ${styles.buttonColor};">
+              🚀 Quiz'i Başlat
+            </button>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    function renderQuestion(styles) {
+      const question = currentQuiz.questions[currentQuestionIndex];
+      if (!question) return '';
+
+      const progress = ((currentQuestionIndex + 1) / currentQuiz.questions.length) * 100;
+
+      return `
+        <div class="quiz-question" style="
+          background: ${styles.backgroundColor};
+          border-radius: ${styles.quizBorderRadius}px;
+          border: ${styles.quizBorderWidth > 0 ? `${styles.quizBorderWidth}px solid ${styles.quizBorderColor}` : 'none'};
+        ">
+          <!-- Progress Bar -->
+          <div class="quiz-progress">
+            <div class="quiz-progress-bar" style="width: ${progress}%;"></div>
+          </div>
+
+          <!-- Question Counter -->
+          <div class="quiz-counter">
+            <span>Soru ${currentQuestionIndex + 1} / ${currentQuiz.questions.length}</span>
+          </div>
+
+          ${question.questionMedia ? `
+            <div class="quiz-question-image">
+              <img src="${question.questionMedia}" alt="Question image" />
+            </div>
+          ` : ''}
+
+          <h2 class="quiz-question-text" style="font-size: ${styles.questionFontSize}px;">
+            ${question.text}
+          </h2>
+
+          <div class="quiz-answers">
+            ${question.answers.map(answer => `
+              <div class="quiz-answer ${selectedAnswers.includes(answer.id) ? 'selected' : ''}" 
+                   data-answer-id="${answer.id}"
+                   style="
+                     background: ${selectedAnswers.includes(answer.id) ? styles.backgroundColor : styles.optionBackgroundColor};
+                     border: ${styles.optionBorderWidth}px solid ${styles.optionBorderColor};
+                     border-radius: ${styles.optionBorderRadius}px;
+                   ">
+                
+                <div class="quiz-answer-indicator ${selectedAnswers.includes(answer.id) ? 'selected' : ''}"></div>
+                
+                ${answer.answerMedia ? `
+                  <div class="quiz-answer-image">
+                    <img src="${answer.answerMedia}" alt="Answer image" />
+                  </div>
+                ` : ''}
+                
+                <span class="quiz-answer-text" 
+                      style="
+                        font-size: ${styles.optionFontSize}px;
+                        color: ${selectedAnswers.includes(answer.id) ? 'white' : '#1a1a1a'};
+                      ">
+                  ${answer.text}
+                </span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderResult(styles) {
+      return `
+        <div class="quiz-result" style="
+          background: ${styles.backgroundColor};
+          border-radius: ${styles.quizBorderRadius}px;
+        ">
+          <div class="quiz-result-icon">🎉</div>
+          <h2 class="quiz-result-title" style="font-size: ${styles.titleFontSize}px;">
+            Quiz Tamamlandı!
+          </h2>
+          <p class="quiz-result-description">
+            Tebrikler! Quiz'i başarıyla tamamladınız.
+          </p>
+          <button class="quiz-finish-btn" data-action="finish" style="background: ${styles.buttonColor};">
+            Kapat
+          </button>
+        </div>
+      `;
+    }
+
+    function renderNavigation() {
+      const canGoPrevious = !(currentView === 'info');
+      const canGoNext = !(currentView === 'question' && selectedAnswers.length === 0);
+      const isLastQuestion = currentView === 'question' && currentQuestionIndex >= currentQuiz.questions.length - 1;
+
+      return `
+        <div class="quiz-navigation">
+          <button class="quiz-nav-btn quiz-prev-btn" 
+                  data-action="previous" 
+                  ${!canGoPrevious ? 'disabled' : ''}>
+            ← Önceki
+          </button>
+
+          <div class="quiz-nav-status">
+            ${currentView === 'info' 
+              ? '🏠 Quiz Bilgileri' 
+              : `🔥 Soru ${currentQuestionIndex + 1}/${currentQuiz.questions.length}`}
+          </div>
+
+          <button class="quiz-nav-btn quiz-next-btn" 
+                  data-action="next" 
+                  ${!canGoNext ? 'disabled' : ''}>
+            ${isLastQuestion ? 'Bitir' : 'Sonraki →'}
+          </button>
+        </div>
+      `;
+    }
+
+    function addEventListeners() {
+      // Start button
+      const startBtn = document.querySelector('[data-action="start"]');
+      if (startBtn) {
+        startBtn.addEventListener('click', handleStart);
+      }
+
+      // Answer options
+      const answerOptions = document.querySelectorAll('.quiz-answer');
+      answerOptions.forEach(option => {
+        option.addEventListener('click', handleAnswerSelect);
+      });
+
+      // Navigation buttons
+      const prevBtn = document.querySelector('[data-action="previous"]');
+      if (prevBtn) {
+        prevBtn.addEventListener('click', handlePrevious);
+      }
+
+      const nextBtn = document.querySelector('[data-action="next"]');
+      if (nextBtn) {
+        nextBtn.addEventListener('click', handleNext);
+      }
+
+      // Finish button
+      const finishBtn = document.querySelector('[data-action="finish"]');
+      if (finishBtn) {
+        finishBtn.addEventListener('click', closeQuizModal);
+      }
+    }
+
+    function handleStart() {
+      if (currentQuiz.questions.length > 0) {
+        currentView = 'question';
+        currentQuestionIndex = 0;
+        selectedAnswers = [];
+        allAnswers = {};
+        renderQuiz();
+      }
+    }
+
+    function handleAnswerSelect(event) {
+      const answerId = event.currentTarget.getAttribute('data-answer-id');
+      const question = currentQuiz.questions[currentQuestionIndex];
+      
+      if (question.allowMultipleSelection) {
+        if (selectedAnswers.includes(answerId)) {
+          selectedAnswers = selectedAnswers.filter(id => id !== answerId);
+        } else {
+          selectedAnswers.push(answerId);
+        }
+      } else {
+        selectedAnswers = [answerId];
+      }
+      
+      renderQuiz();
+    }
+
+    function handlePrevious() {
+      if (currentView === 'question' && currentQuestionIndex > 0) {
+        const newIndex = currentQuestionIndex - 1;
+        currentQuestionIndex = newIndex;
+        
+        // Restore previous answers
+        const questionId = currentQuiz.questions[newIndex].id;
+        selectedAnswers = allAnswers[questionId] || [];
+        renderQuiz();
+      } else if (currentView === 'question' && currentQuestionIndex === 0) {
+        currentView = 'info';
+        selectedAnswers = [];
+        renderQuiz();
+      }
+    }
+
+    function handleNext() {
+      if (currentView === 'info') {
+        if (currentQuiz.questions.length > 0) {
+          currentView = 'question';
+          currentQuestionIndex = 0;
+          selectedAnswers = [];
+          renderQuiz();
+        }
+      } else if (currentView === 'question' && selectedAnswers.length > 0) {
+        // Save current answers
+        const questionId = currentQuiz.questions[currentQuestionIndex].id;
+        allAnswers[questionId] = [...selectedAnswers];
+
+        if (currentQuestionIndex < currentQuiz.questions.length - 1) {
+          const newIndex = currentQuestionIndex + 1;
+          currentQuestionIndex = newIndex;
+          
+          // Load answers for next question
+          const nextQuestionId = currentQuiz.questions[newIndex].id;
+          selectedAnswers = allAnswers[nextQuestionId] || [];
+          renderQuiz();
+        } else {
+          // Quiz completed
+          currentView = 'result';
+          renderQuiz();
+        }
+      }
+    }
+
+    // Make closeQuizModal global
+    window.closeQuizModal = closeQuizModal;
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Quiz Button",
+  "target": "section",
+  "templates": ["index", "product", "collection", "page", "blog", "article", "search", "cart"],
+  "settings": [
+    {
+      "type": "text",
+      "id": "quiz_slug",
+      "label": "Quiz Slug",
+      "info": "Quiz'in slug'ını girin (örn: product-finder)"
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "Button Text",
+      "default": "Quiz Başlat"
+    },
+    {
+      "type": "color",
+      "id": "button_color",
+      "label": "Button Background Color",
+      "default": "#ff6b6b"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Button Text Color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "border_color",
+      "label": "Button Border Color",
+      "default": "#ff6b6b"
+    },
+    {
+      "type": "range",
+      "id": "border_width",
+      "label": "Border Width",
+      "min": 0,
+      "max": 10,
+      "step": 1,
+      "default": 0,
+      "unit": "px"
+    },
+    {
+      "type": "range",
+      "id": "border_radius",
+      "label": "Border Radius",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "default": 25,
+      "unit": "px"
+    },
+    {
+      "type": "range",
+      "id": "button_padding",
+      "label": "Button Padding",
+      "min": 5,
+      "max": 30,
+      "step": 1,
+      "default": 15,
+      "unit": "px"
+    },
+    {
+      "type": "range",
+      "id": "font_size",
+      "label": "Font Size",
+      "min": 12,
+      "max": 24,
+      "step": 1,
+      "default": 16,
+      "unit": "px"
+    }
+  ]
+}
+{% endschema %}

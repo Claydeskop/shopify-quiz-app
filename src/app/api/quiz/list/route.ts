@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { NextRequest, NextResponse } from 'next/server';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,16 +19,18 @@ export async function GET(request: NextRequest) {
         id,
         title,
         quiz_type,
-        slug,
         is_active,
+        auto_transition,
+        selected_collections,
         internal_quiz_title,
         internal_quiz_description,
         created_at,
-        updated_at,
-        questions!inner(count)
+        updated_at
       `)
       .eq('shop_domain', shopDomain)
       .order('created_at', { ascending: false });
+
+    console.log('Quiz query result:', { quizzes, error, count: quizzes?.length });
 
     if (error) {
       console.error('Quiz fetch error:', error);
@@ -45,23 +47,34 @@ export async function GET(request: NextRequest) {
     // Get question and answer counts for each quiz
     const quizzesWithCounts = await Promise.all(
       quizzes.map(async (quiz) => {
-        // Get question count
-        const { count: questionCount } = await supabase
-          .from('questions')
-          .select('*', { count: 'exact', head: true })
-          .eq('quiz_id', quiz.id);
+        try {
+          // Get question count
+          const { count: questionCount, error: qError } = await supabase
+            .from('questions')
+            .select('*', { count: 'exact', head: true })
+            .eq('quiz_id', quiz.id);
 
-        // Get answer count - join with questions to get quiz answers
-        const { count: answerCount } = await supabase
-          .from('answers')
-          .select('*, questions!inner(*)', { count: 'exact', head: true })
-          .eq('questions.quiz_id', quiz.id);
+          // Get answer count - join with questions to get quiz answers
+          const { count: answerCount, error: aError } = await supabase
+            .from('answers')
+            .select('*, questions!inner(*)', { count: 'exact', head: true })
+            .eq('questions.quiz_id', quiz.id);
 
-        return {
-          ...quiz,
-          questionCount: questionCount || 0,
-          answerCount: answerCount || 0
-        };
+          console.log(`Quiz ${quiz.id} counts:`, { questionCount, answerCount, qError, aError });
+
+          return {
+            ...quiz,
+            questionCount: questionCount || 0,
+            answerCount: answerCount || 0
+          };
+        } catch (error) {
+          console.error(`Error getting counts for quiz ${quiz.id}:`, error);
+          return {
+            ...quiz,
+            questionCount: 0,
+            answerCount: 0
+          };
+        }
       })
     );
 

@@ -16,8 +16,9 @@ interface Quiz {
   id: string;
   title: string;
   quiz_type: string;
-  slug: string;
   is_active: boolean;
+  auto_transition: boolean;
+  selected_collections: any[];
   internal_quiz_title: string;
   internal_quiz_description: string;
   created_at: string;
@@ -49,10 +50,22 @@ export default function QuizList({ onEditQuiz, onDeleteQuiz }: QuizListProps) {
       const sessionResponse = await fetch('/api/session');
       const sessionData = await sessionResponse.json();
       
-      if (!sessionResponse.ok || !sessionData.shopDomain) {
+      if (!sessionResponse.ok) {
+        throw new Error('Session alınamadı');
+      }
+      
+      if (sessionData.requiresAuth && sessionData.installUrl) {
+        // OAuth required, redirect to install URL
+        window.top!.location.href = sessionData.installUrl;
+        return;
+      }
+      
+      if (!sessionData.shopDomain) {
         throw new Error('Shop domain alınamadı');
       }
 
+      console.log('Sending request with shop domain:', sessionData.shopDomain);
+      
       const response = await fetch('/api/quiz/list', {
         headers: {
           'x-shopify-shop-domain': sessionData.shopDomain
@@ -61,7 +74,10 @@ export default function QuizList({ onEditQuiz, onDeleteQuiz }: QuizListProps) {
 
       const result = await response.json();
 
+      console.log('Quiz API response:', result);
+
       if (response.ok) {
+        console.log('Setting quizzes:', result.quizzes);
         setQuizzes(result.quizzes || []);
         setError(null);
       } else {
@@ -220,9 +236,16 @@ export default function QuizList({ onEditQuiz, onDeleteQuiz }: QuizListProps) {
 
                     {/* Quiz Settings Info */}
                     <InlineStack gap="200">
-                      <Badge tone="subdued">
-                        Slug: /{quiz.slug}
-                      </Badge>
+                      {quiz.auto_transition && (
+                        <Badge tone="info">
+                          Otomatik Geçiş
+                        </Badge>
+                      )}
+                      {quiz.selected_collections && quiz.selected_collections.length > 0 && (
+                        <Badge tone="success">
+                          {quiz.selected_collections.length} Koleksiyon
+                        </Badge>
+                      )}
                     </InlineStack>
                   </BlockStack>
                 </Box>

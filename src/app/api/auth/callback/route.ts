@@ -8,7 +8,13 @@ export async function GET(request: NextRequest) {
   const shop = searchParams.get('shop');
   const hmac = searchParams.get('hmac');
 
-  console.log('OAuth callback received for shop:', shop);
+  console.log('=== OAuth Callback Debug ===');
+  console.log('Full URL:', request.url);
+  console.log('Code:', code);
+  console.log('Shop:', shop);
+  console.log('HMAC:', hmac);
+  console.log('All params:', Object.fromEntries(searchParams));
+  console.log('========================');
 
   if (!code || !shop) {
     return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
@@ -38,7 +44,14 @@ export async function GET(request: NextRequest) {
     });
 
     if (!tokenResponse.ok) {
-      throw new Error('Failed to exchange code for access token');
+      const errorText = await tokenResponse.text();
+      console.error('Token exchange failed:', {
+        status: tokenResponse.status,
+        statusText: tokenResponse.statusText,
+        body: errorText,
+        url: tokenUrl
+      });
+      throw new Error(`Failed to exchange code for access token: ${tokenResponse.status} ${errorText}`);
     }
 
     const tokenData = await tokenResponse.json();
@@ -66,7 +79,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Set session/cookie for the shop
-    const response = NextResponse.redirect(`https://${shop}/admin/apps/shopify-quiz-app`);
+    const response = NextResponse.redirect(`https://${shop}/admin/apps/product-finder-quiz-app-dev`);
     
     // Set primary shop cookie
     response.cookies.set('shopify_shop', shop, {
@@ -89,6 +102,18 @@ export async function GET(request: NextRequest) {
     return response;
   } catch (error) {
     console.error('OAuth callback error:', error);
-    return NextResponse.json({ error: 'OAuth process failed' }, { status: 500 });
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      code,
+      shop,
+      apiKey,
+      apiSecret: apiSecret ? 'SET' : 'NOT_SET',
+      appUrl
+    });
+    return NextResponse.json({ 
+      error: 'OAuth process failed',
+      details: error instanceof Error ? error.message : String(error)
+    }, { status: 500 });
   }
 }

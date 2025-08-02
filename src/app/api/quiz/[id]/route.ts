@@ -84,6 +84,37 @@ export async function GET(
       );
     }
 
+    // Get all unique collection IDs from answers
+    const collectionIds = new Set<string>();
+    answers.forEach(answer => {
+      if (answer.answer_collections) {
+        answer.answer_collections.forEach((ac: any) => {
+          collectionIds.add(ac.shopify_collection_id);
+        });
+      }
+    });
+
+    // Fetch collection details from Shopify if we have collection IDs
+    let collectionsMap: Record<string, any> = {};
+    if (collectionIds.size > 0) {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/shopify/collections`, {
+          headers: {
+            'x-shopify-shop-domain': shopDomain
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const collections = data.collections || [];
+          collections.forEach((collection: any) => {
+            collectionsMap[collection.id] = collection;
+          });
+        }
+      } catch (error) {
+        console.error('Failed to fetch collection details:', error);
+      }
+    }
+
     // Transform data to match frontend format
     const transformedQuestions = questions.map(q => ({
       id: q.id,
@@ -100,9 +131,18 @@ export async function GET(
       answerMedia: a.answer_media,
       redirectToLink: a.redirect_to_link,
       redirectUrl: a.redirect_url || '',
-      relatedCollections: a.answer_collections?.map((ac: any) => ({
-        id: ac.shopify_collection_id
-      })) || [],
+      relatedCollections: a.answer_collections?.map((ac: any) => {
+        const collection = collectionsMap[ac.shopify_collection_id];
+        return {
+          id: ac.shopify_collection_id,
+          title: collection?.title || 'Unknown Collection',
+          handle: collection?.handle || '',
+          productsCount: collection?.productsCount || 0
+        };
+      }) || [],
+      relatedProducts: a.related_products || [],
+      relatedTags: a.related_tags || [],
+      relatedCategories: a.related_categories || [],
       metafieldConditions: a.metafield_conditions?.map((mc: any) => ({
         id: `${mc.metafield_namespace}-${mc.metafield_key}`,
         metafield: {
@@ -123,6 +163,25 @@ export async function GET(
       quizType: quiz.quiz_type,
       internalQuizTitle: quiz.internal_quiz_title,
       internalQuizDescription: quiz.internal_quiz_description,
+      is_active: quiz.is_active,
+      auto_transition: quiz.auto_transition,
+      selected_collections: quiz.selected_collections,
+      quizImage: quiz.quiz_image || null,
+      styles: quiz.styles || {
+        backgroundColor: '#2c5aa0',
+        optionBackgroundColor: '#ffffff',
+        titleFontSize: 32,
+        questionFontSize: 24,
+        optionFontSize: 18,
+        quizBorderRadius: 24,
+        optionBorderRadius: 12,
+        quizBorderWidth: 0,
+        quizBorderColor: '#ffffff',
+        optionBorderWidth: 2,
+        optionBorderColor: '#ffffff',
+        buttonColor: '#ff6b6b',
+        customCSS: ''
+      },
       questions: transformedQuestions,
       answers: transformedAnswers
     };
@@ -181,6 +240,26 @@ export async function PUT(
         quiz_type: body.quizType,
         internal_quiz_title: body.internalQuizTitle,
         internal_quiz_description: body.internalQuizDescription,
+        is_active: body.isActive,
+        auto_transition: body.autoTransition,
+        selected_collections: body.selectedCollections || [],
+        quiz_image: body.quizImage,
+        shopify_collection_ids: body.selectedCollections?.map((c: any) => c.id) || [],
+        styles: body.styles || {
+          backgroundColor: '#2c5aa0',
+          optionBackgroundColor: '#ffffff',
+          titleFontSize: 32,
+          questionFontSize: 24,
+          optionFontSize: 18,
+          quizBorderRadius: 24,
+          optionBorderRadius: 12,
+          quizBorderWidth: 0,
+          quizBorderColor: '#ffffff',
+          optionBorderWidth: 2,
+          optionBorderColor: '#ffffff',
+          buttonColor: '#ff6b6b',
+          customCSS: ''
+        },
         updated_at: new Date().toISOString()
       })
       .eq('id', quizId)
@@ -238,6 +317,9 @@ export async function PUT(
       answer_media: answer.answerMedia,
       redirect_to_link: answer.redirectToLink,
       redirect_url: answer.redirectUrl,
+      related_products: answer.relatedProducts || [],
+      related_tags: answer.relatedTags || [],
+      related_categories: answer.relatedCategories || [],
       answer_order: index + 1,
       is_default: false,
       weight: 1

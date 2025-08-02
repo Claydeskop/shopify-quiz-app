@@ -29,6 +29,105 @@ interface Answer {
   redirectUrl: string;
 }
 
+interface StyleSettings {
+  // Genel
+  fontFamily: string;
+  animations: boolean;
+
+  // Giriş Ekranı - Renkler
+  introBackgroundColor: string;
+  introStartButtonColor: string;
+  introStartButtonTextColor: string;
+  introQuestionTextColor: string;
+  introDescriptionTextColor: string;
+  introStartButtonBorderColor: string;
+  introImageBorderColor: string;
+
+  // Giriş Ekranı - Borderlar
+  introButtonBorderWidth: number;
+  introButtonBorderRadius: number;
+  introButtonBorderType: string;
+  introImageBorderWidth: number;
+  introImageBorderRadius: number;
+  introImageBorderType: string;
+
+  // Giriş Ekranı - Text
+  introTitleSize: number;
+  introDescriptionSize: number;
+  introButtonTextSize: number;
+  introIconSize: number;
+  introImageHeight: number;
+
+  // Soru Ekranı - Renkler
+  questionBackgroundColor: string;
+  questionOptionBackgroundColor: string;
+  questionOptionBorderColor: string;
+  questionTextColor: string;
+  questionOptionTextColor: string;
+  questionImageBorderColor: string;
+  questionSelectedOptionBackgroundColor: string;
+  questionSelectedOptionTextColor: string;
+  questionSelectedOptionBorderColor: string;
+
+  // Soru Ekranı - Borderlar
+  questionOptionBorderWidth: number;
+  questionOptionBorderRadius: number;
+  questionOptionBorderType: string;
+  questionImageBorderWidth: number;
+  questionImageBorderRadius: number;
+  questionImageBorderType: string;
+
+  // Soru Ekranı - Text & Sizes
+  questionTextSize: number;
+  questionImageHeight: number;
+  questionOptionTextSize: number;
+  questionOptionImageSize: number;
+
+  // Geçiş Butonları
+  navButtonBorderWidth: number;
+  navButtonBorderColor: string;
+  navButtonBorderType: string;
+  navButtonBorderRadius: number;
+  navButtonTextSize: number;
+  navButtonTextType: string;
+  navPrevButtonColor: string;
+  navPrevButtonTextColor: string;
+  navOkIconColor: string;
+
+  // Soru Sayacı
+  counterBackgroundColor: string;
+  counterBorderColor: string;
+  counterTextColor: string;
+  counterBorderWidth: number;
+  counterBorderRadius: number;
+  counterBorderType: string;
+  counterTextSize: number;
+  counterTextStyle: string;
+
+  // Sonuç Ekranı
+  resultBackgroundColor: string;
+  resultTextColor: string;
+  resultButtonColor: string;
+  resultButtonTextColor: string;
+
+  // Özel CSS
+  customCSS: string;
+
+  // Eski alanlar backward compatibility için
+  backgroundColor?: string;
+  optionBackgroundColor?: string;
+  titleFontSize?: number;
+  questionFontSize?: number;
+  optionFontSize?: number;
+  quizBorderRadius?: number;
+  optionBorderRadius?: number;
+  quizBorderWidth?: number;
+  quizBorderColor?: string;
+  optionBorderWidth?: number;
+  optionBorderColor?: string;
+  buttonColor?: string;
+}
+
 interface QuizPreviewProps {
   quizTitle: string;
   quizDescription: string;
@@ -41,6 +140,7 @@ interface QuizPreviewProps {
   internalQuizTitle: string;
   internalQuizDescription: string;
   quizImage: string | null;
+  styles?: StyleSettings;
   onTitleChange: (value: string) => void;
   onDescriptionChange: (value: string) => void;
   onTypeChange: (value: string) => void;
@@ -59,6 +159,7 @@ export default function QuizPreview({
   internalQuizTitle,
   internalQuizDescription,
   quizImage,
+  styles,
   onQuestionSelect,
   onTabChange
 }: QuizPreviewProps) {
@@ -66,25 +167,122 @@ export default function QuizPreview({
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
 
-  // Quiz settings - Bu gelecekte settings'den gelecek
-  const [quizSettings, setQuizSettings] = useState({
-    frameStyle: 'rounded',
-    textColor: '#000000',
-    backgroundColor: '#ffffff',
-    transitionAnimation: 'slide'
-  });
+  // Default style settings
+  const defaultStyles: StyleSettings = {
+    // Genel
+    fontFamily: 'Arial, sans-serif',
+    animations: true,
+
+    // Giriş Ekranı - Renkler
+    introBackgroundColor: '#2c5aa0',
+    introStartButtonColor: '#ff6b6b',
+    introStartButtonTextColor: '#ffffff',
+    introQuestionTextColor: '#ffffff',
+    introDescriptionTextColor: '#ffffff',
+    introStartButtonBorderColor: '#ffffff',
+    introImageBorderColor: '#ffffff',
+
+    // Giriş Ekranı - Borderlar
+    introButtonBorderWidth: 2,
+    introButtonBorderRadius: 12,
+    introButtonBorderType: 'solid',
+    introImageBorderWidth: 0,
+    introImageBorderRadius: 8,
+    introImageBorderType: 'solid',
+
+    // Giriş Ekranı - Text
+    introTitleSize: 32,
+    introDescriptionSize: 18,
+    introButtonTextSize: 16,
+    introIconSize: 24,
+    introImageHeight: 200,
+
+    // Soru Ekranı - Renkler
+    questionBackgroundColor: '#2c5aa0',
+    questionOptionBackgroundColor: '#ffffff',
+    questionOptionBorderColor: '#ffffff',
+    questionTextColor: '#ffffff',
+    questionOptionTextColor: '#333333',
+    questionImageBorderColor: '#ffffff',
+    questionSelectedOptionBackgroundColor: '#ff6b6b',
+    questionSelectedOptionTextColor: '#ffffff',
+    questionSelectedOptionBorderColor: '#ff6b6b',
+
+    // Soru Ekranı - Borderlar
+    questionOptionBorderWidth: 2,
+    questionOptionBorderRadius: 12,
+    questionOptionBorderType: 'solid',
+    questionImageBorderWidth: 0,
+    questionImageBorderRadius: 8,
+    questionImageBorderType: 'solid',
+
+    // Soru Ekranı - Text & Sizes
+    questionTextSize: 24,
+    questionImageHeight: 200,
+    questionOptionTextSize: 18,
+    questionOptionImageSize: 100,
+
+    // Geçiş Butonları
+    navButtonBorderWidth: 2,
+    navButtonBorderColor: '#ffffff',
+    navButtonBorderType: 'solid',
+    navButtonBorderRadius: 8,
+    navButtonTextSize: 16,
+    navButtonTextType: 'normal',
+    navPrevButtonColor: '#6c757d',
+    navPrevButtonTextColor: '#ffffff',
+    navOkIconColor: '#28a745',
+
+    // Soru Sayacı
+    counterBackgroundColor: 'rgba(255,255,255,0.2)',
+    counterBorderColor: '#ffffff',
+    counterTextColor: '#ffffff',
+    counterBorderWidth: 1,
+    counterBorderRadius: 20,
+    counterBorderType: 'solid',
+    counterTextSize: 14,
+    counterTextStyle: 'normal',
+
+    // Sonuç Ekranı
+    resultBackgroundColor: '#2c5aa0',
+    resultTextColor: '#ffffff',
+    resultButtonColor: '#ff6b6b',
+    resultButtonTextColor: '#ffffff',
+
+    customCSS: ''
+  };
+
+  // Backward compatibility ve yeni stil ayarlarını birleştir
+  const currentStyles = { 
+    ...defaultStyles, 
+    ...styles,
+    // Backward compatibility için eski alanları yeni alanlara map et
+    ...(styles?.backgroundColor && !styles?.introBackgroundColor && { introBackgroundColor: styles.backgroundColor }),
+    ...(styles?.backgroundColor && !styles?.questionBackgroundColor && { questionBackgroundColor: styles.backgroundColor }),
+    ...(styles?.optionBackgroundColor && !styles?.questionOptionBackgroundColor && { questionOptionBackgroundColor: styles.optionBackgroundColor }),
+    ...(styles?.titleFontSize && !styles?.introTitleSize && { introTitleSize: styles.titleFontSize }),
+    ...(styles?.questionFontSize && !styles?.questionTextSize && { questionTextSize: styles.questionFontSize }),
+    ...(styles?.optionFontSize && !styles?.questionOptionTextSize && { questionOptionTextSize: styles.optionFontSize }),
+    ...(styles?.buttonColor && !styles?.introStartButtonColor && { introStartButtonColor: styles.buttonColor }),
+    ...(styles?.quizBorderRadius && !styles?.introButtonBorderRadius && { introButtonBorderRadius: styles.quizBorderRadius }),
+    ...(styles?.optionBorderRadius && !styles?.questionOptionBorderRadius && { questionOptionBorderRadius: styles.optionBorderRadius }),
+  };
 
   // Update current view based on selection - Force immediate updates
   useEffect(() => {
-    // Clear selected answers when switching context
-    setSelectedAnswers([]);
+    // Clear selected answers when switching context (except for style tab)
+    if (activeTab !== 'style') {
+      setSelectedAnswers([]);
+    }
     
-    // Information or Style tab selected - show quiz info
-    if (activeTab === 'information' || activeTab === 'style') {
+    // Only Information tab selected - show quiz info
+    if (activeTab === 'information') {
       if (!selectedQuestionId && !selectedAnswerId) {
         setCurrentView('info');
       }
     }
+    
+    // Style tab selected - don't change current view, keep it as is
     
     // Question or Answer selected - show question view
     if ((selectedQuestionId && selectedQuestionId !== '') || (selectedAnswerId && selectedAnswerId !== '')) {
@@ -197,11 +395,13 @@ export default function QuizPreview({
         textAlign: 'center',
         padding: '40px',
         height: '70vh',
-        background: '#2c5aa0',
-        borderRadius: '24px',
+        background: currentStyles.introBackgroundColor || currentStyles.backgroundColor || '#2c5aa0',
+        borderRadius: `${currentStyles.introButtonBorderRadius || 24}px`,
+        border: currentStyles.introImageBorderWidth > 0 ? `${currentStyles.introImageBorderWidth}px ${currentStyles.introImageBorderType} ${currentStyles.introImageBorderColor}` : 'none',
         position: 'relative',
         overflow: 'hidden',
         boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+        fontFamily: currentStyles.fontFamily || 'Arial, sans-serif',
       }}
     >
       {/* Background Decoration */}
@@ -227,10 +427,10 @@ export default function QuizPreview({
           >
             <div style={{
               width: '120px',
-              height: '120px',
-              borderRadius: '50%',
+              height: `${currentStyles.introImageHeight || 200}px`,
+              borderRadius: `${currentStyles.introImageBorderRadius}px`,
               overflow: 'hidden',
-              border: '4px solid rgba(255,255,255,0.3)',
+              border: currentStyles.introImageBorderWidth > 0 ? `${currentStyles.introImageBorderWidth}px ${currentStyles.introImageBorderType} ${currentStyles.introImageBorderColor}` : '4px solid rgba(255,255,255,0.3)',
               background: 'rgba(255,255,255,0.1)',
               display: 'flex',
               alignItems: 'center',
@@ -258,14 +458,15 @@ export default function QuizPreview({
         transition={{ duration: 0.6, delay: 0.3 }}
         className="quiz-title"
         style={{
-          fontSize: '2rem',
+          fontSize: `${currentStyles.introTitleSize || currentStyles.titleFontSize || 32}px`,
           fontWeight: '700',
-          color: 'white',
+          color: currentStyles.introQuestionTextColor || 'white',
           marginBottom: '16px',
           textShadow: '0 2px 4px rgba(0,0,0,0.3)',
           position: 'relative',
           zIndex: 2,
           lineHeight: '1.5',
+          fontFamily: currentStyles.fontFamily || 'Arial, sans-serif',
         }}
       >
         {internalQuizTitle || 'Quiz Title'}
@@ -280,13 +481,14 @@ export default function QuizPreview({
             exit={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.5, delay: 0.4 }}
             style={{
-              fontSize: '1.125rem',
-              color: 'rgba(255,255,255,0.9)',
+              fontSize: `${currentStyles.introDescriptionSize || 18}px`,
+              color: currentStyles.introDescriptionTextColor || 'rgba(255,255,255,0.9)',
               marginBottom: '32px',
               maxWidth: '400px',
               lineHeight: '1.6',
               position: 'relative',
               zIndex: 2,
+              fontFamily: currentStyles.fontFamily || 'Arial, sans-serif',
             }}
           >
             {internalQuizDescription}
@@ -309,18 +511,19 @@ export default function QuizPreview({
             <button
               onClick={handleStartQuiz}
               style={{
-                background: 'linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%)',
-                border: 'none',
-                borderRadius: '50px',
+                background: `linear-gradient(135deg, ${currentStyles.introStartButtonColor || currentStyles.buttonColor || '#ff6b6b'} 0%, ${currentStyles.introStartButtonColor || currentStyles.buttonColor || '#ff6b6b'}AA 100%)`,
+                border: currentStyles.introButtonBorderWidth > 0 ? `${currentStyles.introButtonBorderWidth}px ${currentStyles.introButtonBorderType} ${currentStyles.introStartButtonBorderColor}` : 'none',
+                borderRadius: `${currentStyles.introButtonBorderRadius || 50}px`,
                 padding: '16px 48px',
-                fontSize: '1.125rem',
+                fontSize: `${currentStyles.introButtonTextSize || 18}px`,
                 fontWeight: '600',
-                color: 'white',
+                color: currentStyles.introStartButtonTextColor || 'white',
                 cursor: 'pointer',
                 boxShadow: '0 10px 25px rgba(255, 107, 107, 0.4)',
                 transition: 'all 0.3s ease',
                 position: 'relative',
                 overflow: 'hidden',
+                fontFamily: currentStyles.fontFamily || 'Arial, sans-serif',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-2px)';
@@ -402,12 +605,14 @@ export default function QuizPreview({
         transition={{ duration: 0.5, ease: "easeOut" }}
         style={{
           padding: '32px',
-          background: '#2c5aa0',
-          borderRadius: '24px',
+          background: currentStyles.questionBackgroundColor || currentStyles.backgroundColor || '#2c5aa0',
+          borderRadius: `${currentStyles.questionOptionBorderRadius || currentStyles.quizBorderRadius || 24}px`,
+          border: currentStyles.questionImageBorderWidth > 0 ? `${currentStyles.questionImageBorderWidth}px ${currentStyles.questionImageBorderType} ${currentStyles.questionImageBorderColor}` : 'none',
           height: '70vh',
           overflow: 'auto',
           position: 'relative',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          fontFamily: currentStyles.fontFamily || 'Arial, sans-serif',
         }}
       >
         {/* Progress Bar */}
@@ -446,16 +651,19 @@ export default function QuizPreview({
           }}
         >
           <div style={{
-            background: 'rgba(255,255,255,0.2)',
+            background: currentStyles.counterBackgroundColor || 'rgba(255,255,255,0.2)',
             padding: '8px 16px',
-            borderRadius: '20px',
+            borderRadius: `${currentStyles.counterBorderRadius || 20}px`,
             backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255,255,255,0.3)'
+            border: currentStyles.counterBorderWidth > 0 ? `${currentStyles.counterBorderWidth}px ${currentStyles.counterBorderType} ${currentStyles.counterBorderColor}` : '1px solid rgba(255,255,255,0.3)'
           }}>
             <span style={{ 
-              color: 'white', 
-              fontSize: '0.875rem', 
-              fontWeight: '600' 
+              color: currentStyles.counterTextColor || 'white', 
+              fontSize: `${currentStyles.counterTextSize || 14}px`, 
+              fontWeight: currentStyles.counterTextStyle === 'bold' ? '600' : '400',
+              fontFamily: currentStyles.fontFamily || 'Arial, sans-serif',
+              textTransform: currentStyles.counterTextStyle === 'uppercase' ? 'uppercase' : currentStyles.counterTextStyle === 'lowercase' ? 'lowercase' : currentStyles.counterTextStyle === 'capitalize' ? 'capitalize' : 'none',
+              fontStyle: currentStyles.counterTextStyle === 'italic' ? 'italic' : 'normal'
             }}>
               Soru {currentQuestionIndex + 1} / {questions.length}
             </span>
@@ -477,9 +685,9 @@ export default function QuizPreview({
               }}
             >
               <div style={{
-                borderRadius: '16px',
+                borderRadius: `${currentStyles.questionImageBorderRadius || 16}px`,
                 overflow: 'hidden',
-                border: '3px solid rgba(255,255,255,0.3)',
+                border: currentStyles.questionImageBorderWidth > 0 ? `${currentStyles.questionImageBorderWidth}px ${currentStyles.questionImageBorderType} ${currentStyles.questionImageBorderColor}` : '3px solid rgba(255,255,255,0.3)',
                 boxShadow: '0 15px 35px rgba(0,0,0,0.1)',
                 maxWidth: '300px'
               }}>
@@ -489,7 +697,7 @@ export default function QuizPreview({
                   style={{
                     width: '100%',
                     height: 'auto',
-                    maxHeight: '200px',
+                    maxHeight: `${currentStyles.questionImageHeight || 200}px`,
                     objectFit: 'cover',
                     display: 'block'
                   }}
@@ -506,13 +714,14 @@ export default function QuizPreview({
           transition={{ duration: 0.5, delay: 0.3 }}
           className="question-title"
           style={{
-            fontSize: '1.5rem',
+            fontSize: `${currentStyles.questionTextSize || currentStyles.questionFontSize || 24}px`,
             fontWeight: '700',
-            color: 'white',
+            color: currentStyles.questionTextColor || 'white',
             marginBottom: '32px',
             textAlign: 'center',
             textShadow: '0 2px 4px rgba(0,0,0,0.3)',
-            lineHeight: '1.5'
+            lineHeight: '1.5',
+            fontFamily: currentStyles.fontFamily || 'Arial, sans-serif',
           }}
         >
           {currentQuestion.text}
@@ -546,27 +755,30 @@ export default function QuizPreview({
               style={{
                 padding: '16px',
                 background: selectedAnswers.includes(answer.id) 
-                  ? '#1a4480'
-                  : 'rgba(255,255,255,0.95)',
-                border: selectedAnswers.includes(answer.id) 
-                  ? '2px solid rgba(255,255,255,0.5)'
-                  : '2px solid rgba(255,255,255,0.2)',
-                borderRadius: '12px',
+                  ? currentStyles.questionSelectedOptionBackgroundColor || currentStyles.backgroundColor || '#ff6b6b'
+                  : currentStyles.questionOptionBackgroundColor || currentStyles.optionBackgroundColor || '#ffffff',
+                border: currentStyles.questionOptionBorderWidth > 0 
+                  ? `${currentStyles.questionOptionBorderWidth}px ${currentStyles.questionOptionBorderType} ${selectedAnswers.includes(answer.id) ? currentStyles.questionSelectedOptionBorderColor : currentStyles.questionOptionBorderColor}`
+                  : selectedAnswers.includes(answer.id) 
+                    ? '2px solid rgba(255,255,255,0.5)'
+                    : '2px solid rgba(255,255,255,0.2)',
+                borderRadius: `${currentStyles.questionOptionBorderRadius || currentStyles.optionBorderRadius || 12}px`,
                 cursor: 'pointer',
-                transition: 'all 0.3s ease',
+                transition: currentStyles.animations ? 'all 0.3s ease' : 'none',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 textAlign: 'center',
-                width: '140px',
-                height: '140px',
+                width: `${currentStyles.questionOptionImageSize || 140}px`,
+                height: `${currentStyles.questionOptionImageSize || 140}px`,
                 position: 'relative',
                 backdropFilter: 'blur(10px)',
                 boxShadow: selectedAnswers.includes(answer.id)
                   ? '0 8px 25px rgba(26, 68, 128, 0.3)'
                   : '0 4px 15px rgba(0,0,0,0.1)',
                 overflow: 'hidden',
-                flex: '0 0 auto'
+                flex: '0 0 auto',
+                fontFamily: currentStyles.fontFamily || 'Arial, sans-serif',
               }}
             >
               {/* Selection Indicator */}
@@ -642,13 +854,16 @@ export default function QuizPreview({
                 <span 
                   className="answer-text"
                   style={{
-                    fontSize: '1.125rem',
+                    fontSize: `${currentStyles.questionOptionTextSize || currentStyles.optionFontSize || 18}px`,
                     fontWeight: '600',
-                    color: selectedAnswers.includes(answer.id) ? 'white' : '#1a1a1a',
+                    color: selectedAnswers.includes(answer.id) 
+                      ? currentStyles.questionSelectedOptionTextColor || 'white' 
+                      : currentStyles.questionOptionTextColor || '#1a1a1a',
                     lineHeight: '1.4',
                     textShadow: selectedAnswers.includes(answer.id) 
                       ? '0 1px 2px rgba(0,0,0,0.3)' 
-                      : 'none'
+                      : 'none',
+                    fontFamily: currentStyles.fontFamily || 'Arial, sans-serif',
                   }}>
                   {answer.text}
                 </span>
@@ -779,18 +994,21 @@ export default function QuizPreview({
             style={{
               background: currentView === 'info' 
                 ? 'rgba(0,0,0,0.1)' 
-                : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              border: 'none',
-              borderRadius: '12px',
+                : currentStyles.navPrevButtonColor || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              border: currentStyles.navButtonBorderWidth > 0 ? `${currentStyles.navButtonBorderWidth}px ${currentStyles.navButtonBorderType} ${currentStyles.navButtonBorderColor}` : 'none',
+              borderRadius: `${currentStyles.navButtonBorderRadius || 12}px`,
               padding: '12px 24px',
-              color: currentView === 'info' ? '#666' : 'white',
-              fontWeight: '600',
+              color: currentView === 'info' ? '#666' : currentStyles.navPrevButtonTextColor || 'white',
+              fontWeight: currentStyles.navButtonTextType === 'bold' ? '600' : '400',
+              fontStyle: currentStyles.navButtonTextType === 'italic' ? 'italic' : 'normal',
+              fontSize: `${currentStyles.navButtonTextSize || 16}px`,
               cursor: currentView === 'info' ? 'not-allowed' : 'pointer',
               boxShadow: currentView === 'info' 
                 ? 'none' 
                 : '0 4px 15px rgba(102, 126, 234, 0.3)',
-              transition: 'all 0.3s ease',
-              opacity: currentView === 'info' ? 0.5 : 1
+              transition: currentStyles.animations ? 'all 0.3s ease' : 'none',
+              opacity: currentView === 'info' ? 0.5 : 1,
+              fontFamily: currentStyles.fontFamily || 'Arial, sans-serif',
             }}
           >
             ← Önceki
@@ -832,24 +1050,27 @@ export default function QuizPreview({
             style={{
               background: (currentView === 'question' && currentQuestionIndex >= questions.length - 1)
                 ? 'rgba(0,0,0,0.1)'
-                : 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-              border: 'none',
-              borderRadius: '12px',
+                : currentStyles.navOkIconColor || 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+              border: currentStyles.navButtonBorderWidth > 0 ? `${currentStyles.navButtonBorderWidth}px ${currentStyles.navButtonBorderType} ${currentStyles.navButtonBorderColor}` : 'none',
+              borderRadius: `${currentStyles.navButtonBorderRadius || 12}px`,
               padding: '12px 24px',
               color: (currentView === 'question' && currentQuestionIndex >= questions.length - 1) 
                 ? '#666' 
                 : 'white',
-              fontWeight: '600',
+              fontWeight: currentStyles.navButtonTextType === 'bold' ? '600' : '400',
+              fontStyle: currentStyles.navButtonTextType === 'italic' ? 'italic' : 'normal',
+              fontSize: `${currentStyles.navButtonTextSize || 16}px`,
               cursor: (currentView === 'question' && currentQuestionIndex >= questions.length - 1) 
                 ? 'not-allowed' 
                 : 'pointer',
               boxShadow: (currentView === 'question' && currentQuestionIndex >= questions.length - 1)
                 ? 'none'
                 : '0 4px 15px rgba(240, 147, 251, 0.3)',
-              transition: 'all 0.3s ease',
+              transition: currentStyles.animations ? 'all 0.3s ease' : 'none',
               opacity: (currentView === 'question' && currentQuestionIndex >= questions.length - 1) 
                 ? 0.5 
-                : 1
+                : 1,
+              fontFamily: currentStyles.fontFamily || 'Arial, sans-serif',
             }}
           >
             Sonraki →
@@ -893,6 +1114,9 @@ export default function QuizPreview({
               font-size: 0.875rem !important;
             }
           }
+
+          /* Custom CSS */
+          ${currentStyles.customCSS}
         `}</style>
       </div>
     </Card>

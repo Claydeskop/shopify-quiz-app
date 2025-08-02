@@ -1,20 +1,27 @@
 'use client';
 
-import { Checkbox, Divider, Text, TextField } from '@shopify/polaris';
+import { Text, TextField, Box } from '@shopify/polaris';
 import { useState } from 'react';
 import CollectionPicker from '../../pickers/CollectionPicker';
 import MediaPicker from '../../pickers/MediaPicker';
-import MetafieldPicker from '../../pickers/MetafieldPicker';
+import TogglePicker from '../../pickers/TogglePicker';
+import CheckboxPicker from '../../pickers/CheckboxPicker';
 
 interface InformationSettingsProps {
   quizName: string;
   quizTitle: string;
   quizDescription: string;
   quizImage: string | null;
+  isActive: boolean;
+  autoTransition: boolean;
+  selectedCollections: any[];
   onQuizNameChange: (value: string) => void;
   onQuizTitleChange: (value: string) => void;
   onQuizDescriptionChange: (value: string) => void;
   onQuizImageChange: (imageUrl: string | null) => void;
+  onIsActiveChange: (value: boolean) => void;
+  onAutoTransitionChange: (value: boolean) => void;
+  onCollectionsChange: (collections: any[]) => void;
 }
 
 export default function InformationSettings({ 
@@ -22,15 +29,17 @@ export default function InformationSettings({
   quizTitle,
   quizDescription,
   quizImage,
+  isActive,
+  autoTransition,
+  selectedCollections,
   onQuizNameChange,
   onQuizTitleChange,
   onQuizDescriptionChange,
-  onQuizImageChange
+  onQuizImageChange,
+  onIsActiveChange,
+  onAutoTransitionChange,
+  onCollectionsChange
 }: InformationSettingsProps) {
-  const [selectedCollections, setSelectedCollections] = useState<any[]>([]);
-  const [selectedProducts, setSelectedProducts] = useState<any[]>([]);
-  const [metafieldConditions, setMetafieldConditions] = useState<any[]>([]);
-  const [metafieldsEnabled, setMetafieldsEnabled] = useState<boolean>(false);
 
   const handleMediaSelect = (mediaUrl: string) => {
     onQuizImageChange(mediaUrl);
@@ -41,84 +50,76 @@ export default function InformationSettings({
   };
 
   const handleCollectionsChange = (collections: any[]) => {
-    setSelectedCollections(collections);
-  };
-
-  const handleProductsChange = (products: any[]) => {
-    setSelectedProducts(products);
-  };
-
-  const handleMetafieldConditionsChange = (conditions: any[]) => {
-    setMetafieldConditions(conditions);
+    onCollectionsChange(collections);
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <Box>
       <Text variant='headingSm' as='h4'>Quiz Information Settings</Text>
       
-      <TextField
-        label="Quiz Name"
-        value={quizName}
-        onChange={onQuizNameChange}
-        placeholder="Enter quiz name"
-        helpText="Bu ismi diğer kullanıcılar görmeyecektir"
-        autoComplete="off"
+      <TogglePicker
+        label="Quiz Durumu"
+        checked={isActive}
+        onChange={onIsActiveChange}
+        helpText="Aktif olan quizler mağaza önyüzünde görüntülenebilir"
       />
 
-      <TextField
-        label="Quiz Title"
-        value={quizTitle}
-        onChange={onQuizTitleChange}
-        placeholder="Enter quiz title"
-        helpText="Bu title preview alanında görünecektir"
-        autoComplete="off"
-      />
+      <Box paddingBlockStart="400" paddingBlockEnd="400">
+        <TextField
+          label="Quiz Name"
+          value={quizName}
+          onChange={onQuizNameChange}
+          placeholder="Enter quiz name"
+          helpText="Bu ismi diğer kullanıcılar görmeyecektir"
+          autoComplete="off"
+        />
+      </Box>
 
-      <TextField
-        label="Quiz Description"
-        value={quizDescription}
-        onChange={onQuizDescriptionChange}
-        placeholder="Enter quiz description"
-        helpText="Bu açıklama preview alanında görünecektir"
-        multiline={3}
-        autoComplete="off"
-      />
+      <Box paddingBlockStart="400" paddingBlockEnd="400">
+        <TextField
+          label="Quiz Title"
+          value={quizTitle}
+          onChange={onQuizTitleChange}
+          placeholder="Enter quiz title"
+          helpText="Bu title preview alanında görünecektir"
+          autoComplete="off"
+        />
+      </Box>
 
-      <Divider />
+      <Box paddingBlockStart="400" paddingBlockEnd="400">
+        <TextField
+          label="Quiz Description"
+          value={quizDescription}
+          onChange={onQuizDescriptionChange}
+          placeholder="Enter quiz description"
+          helpText="Bu açıklama preview alanında görünecektir"
+          multiline={3}
+          autoComplete="off"
+        />
+      </Box>
 
-      <Text variant='headingXs' as='h5'>Quiz Image</Text>
-      <MediaPicker
-        selectedMedia={quizImage}
-        onMediaSelect={handleMediaSelect}
-        onMediaRemove={handleRemoveMedia}
-      />
+      <Box paddingBlockStart="400" paddingBlockEnd="400">
+        <Text variant='bodyMd' fontWeight="medium">Quiz Image</Text>
+        <Box paddingBlockStart="200">
+          <MediaPicker
+            selectedMedia={quizImage}
+            onMediaSelect={handleMediaSelect}
+            onMediaRemove={handleRemoveMedia}
+          />
+        </Box>
+      </Box>
 
-      <Divider />
-
-      <Text variant='headingXs' as='h5'>Quiz Collection</Text>
       <CollectionPicker
         selectedCollections={selectedCollections}
         onCollectionsChange={handleCollectionsChange}
       />
 
-      <Divider />
-
-      <Divider />
-
-      <Checkbox
-        label="Metafields Enabled"
-        checked={metafieldsEnabled}
-        onChange={setMetafieldsEnabled}
+      <CheckboxPicker
+        label="Otomatik Geçiş"
+        checked={autoTransition}
+        onChange={onAutoTransitionChange}
+        helpText="Kullanıcılar cevap seçtikten sonra otomatik olarak bir sonraki soruya geçsin"
       />
-
-      {metafieldsEnabled && (
-        <>
-          <MetafieldPicker
-            conditions={metafieldConditions}
-            onConditionsChange={handleMetafieldConditionsChange}
-          />
-        </>
-      )}
-    </div>
+    </Box>
   );
 }

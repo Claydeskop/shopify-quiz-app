@@ -48,11 +48,25 @@ export default function MediaPicker({ selectedMedia, onMediaSelect, onMediaRemov
           
           {selectedMedia ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
-              <Thumbnail
-                source={selectedMedia}
-                alt="Selected quiz image"
-                size="large"
-              />
+              <div style={{ 
+                width: '120px', 
+                height: '120px', 
+                borderRadius: '8px', 
+                overflow: 'hidden',
+                border: '1px solid #e1e3e5'
+              }}>
+                <img 
+                  src={selectedMedia} 
+                  alt="Selected quiz image"
+                  style={{ 
+                    width: '100%', 
+                    height: '100%', 
+                    objectFit: 'cover',
+                    display: 'block'
+                  }}
+                  loading="eager"
+                />
+              </div>
               <ButtonGroup>
                 <Button size='slim' onClick={handleOpenPicker}>
                   Change Image

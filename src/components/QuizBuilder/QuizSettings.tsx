@@ -29,6 +29,22 @@ interface Answer {
   metafieldConditions: any[];
 }
 
+interface StyleSettings {
+  backgroundColor: string;
+  optionBackgroundColor: string;
+  titleFontSize: number;
+  questionFontSize: number;
+  optionFontSize: number;
+  quizBorderRadius: number;
+  optionBorderRadius: number;
+  quizBorderWidth: number;
+  quizBorderColor: string;
+  optionBorderWidth: number;
+  optionBorderColor: string;
+  buttonColor: string;
+  customCSS: string;
+}
+
 interface QuizSettingsProps {
   activeTab: string;
   selectedQuestionId: string | null;
@@ -40,9 +56,15 @@ interface QuizSettingsProps {
   quizName: string;
   quizTitle: string;
   quizImage: string | null;
+  isActive: boolean;
+  autoTransition: boolean;
+  selectedCollections: any[];
   onQuizNameChange: (value: string) => void;
   onQuizTitleChange: (value: string) => void;
   onQuizImageChange: (imageUrl: string | null) => void;
+  onIsActiveChange: (value: boolean) => void;
+  onAutoTransitionChange: (value: boolean) => void;
+  onCollectionsChange: (collections: any[]) => void;
   internalQuizTitle: string;
   internalQuizDescription: string;
   onInternalQuizTitleChange: (value: string) => void;
@@ -55,6 +77,8 @@ interface QuizSettingsProps {
   onAnswerRedirectToLinkChange: (answerId: string, value: boolean) => void;
   onAnswerRedirectUrlChange: (answerId: string, url: string) => void;
   onAnswerMetafieldConditionsChange: (answerId: string, conditions: any[]) => void;
+  styleSettings?: StyleSettings;
+  onStyleChange?: (styles: StyleSettings) => void;
 }
 
 export default function QuizSettings({ 
@@ -68,9 +92,15 @@ export default function QuizSettings({
   quizName,
   quizTitle,
   quizImage,
+  isActive,
+  autoTransition,
+  selectedCollections,
   onQuizNameChange,
   onQuizTitleChange,
   onQuizImageChange,
+  onIsActiveChange,
+  onAutoTransitionChange,
+  onCollectionsChange,
   internalQuizTitle,
   internalQuizDescription,
   onInternalQuizTitleChange,
@@ -82,7 +112,9 @@ export default function QuizSettings({
   onAnswerCollectionsChange,
   onAnswerRedirectToLinkChange,
   onAnswerRedirectUrlChange,
-  onAnswerMetafieldConditionsChange
+  onAnswerMetafieldConditionsChange,
+  styleSettings,
+  onStyleChange
 }: QuizSettingsProps) {
 
   const renderContent = () => {
@@ -94,15 +126,21 @@ export default function QuizSettings({
             quizTitle={internalQuizTitle}
             quizDescription={internalQuizDescription}
             quizImage={quizImage}
+            isActive={isActive}
+            autoTransition={autoTransition}
+            selectedCollections={selectedCollections}
             onQuizNameChange={onQuizNameChange}
             onQuizTitleChange={onInternalQuizTitleChange}
             onQuizDescriptionChange={onInternalQuizDescriptionChange}
             onQuizImageChange={onQuizImageChange}
+            onIsActiveChange={onIsActiveChange}
+            onAutoTransitionChange={onAutoTransitionChange}
+            onCollectionsChange={onCollectionsChange}
           />
         );
       
       case 'style':
-        return <StyleSettings />;
+        return <StyleSettings styles={styleSettings} onStyleChange={onStyleChange} />;
       
       case 'questions':
         // If an answer is selected, show answer settings
@@ -139,10 +177,16 @@ export default function QuizSettings({
             quizTitle={internalQuizTitle}
             quizDescription={internalQuizDescription}
             quizImage={quizImage}
+            isActive={isActive}
+            autoTransition={autoTransition}
+            selectedCollections={selectedCollections}
             onQuizNameChange={onQuizNameChange}
             onQuizTitleChange={onInternalQuizTitleChange}
             onQuizDescriptionChange={onInternalQuizDescriptionChange}
             onQuizImageChange={onQuizImageChange}
+            onIsActiveChange={onIsActiveChange}
+            onAutoTransitionChange={onAutoTransitionChange}
+            onCollectionsChange={onCollectionsChange}
           />
         );
     }
@@ -155,11 +199,28 @@ export default function QuizSettings({
           padding: '4px', 
           height: '93vh',
           overflowY: 'auto',
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none'
+          overflowX: 'auto',
+          scrollbarWidth: 'thin',
+          scrollbarColor: '#c1c8cd transparent'
         }}
         className="quiz-settings-scroll"
       >
+        <style jsx>{`
+          .quiz-settings-scroll::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+          }
+          .quiz-settings-scroll::-webkit-scrollbar-track {
+            background: transparent;
+          }
+          .quiz-settings-scroll::-webkit-scrollbar-thumb {
+            background: #c1c8cd;
+            border-radius: 4px;
+          }
+          .quiz-settings-scroll::-webkit-scrollbar-thumb:hover {
+            background: #a8b1b8;
+          }
+        `}</style>
         <Text variant='headingMd' as='h3'>Quiz Settings</Text>
         
         <Box paddingBlockStart='400'>

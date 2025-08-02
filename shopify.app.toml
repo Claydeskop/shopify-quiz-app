@@ -1,0 +1,33 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "b0ebb1c31cc4fce68c44006d06eb1b18"
+application_url = "https://giant-heads-relate.loca.lt/"
+embedded = true
+name = "Product Finder Quiz App (Dev)"
+handle = "product-finder-quiz-app-dev"
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "atlas-design-shop.myshopify.com"
+include_config_on_deploy = true
+
+[webhooks]
+api_version = "2024-10"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_content,read_products,read_themes,write_content,write_products,write_themes,read_product_listings"
+
+[auth]
+redirect_urls = [
+  "https://giant-heads-relate.loca.lt/api/auth",
+  "https://giant-heads-relate.loca.lt/api/auth/callback"
+]
+
+[app_proxy]
+url = "https://giant-heads-relate.loca.lt/api/proxy"
+subpath = "quiz-app"
+prefix = "apps"
+
+[pos]
+embedded = false

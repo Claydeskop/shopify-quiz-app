@@ -98,14 +98,6 @@ export default function AnswerSettings({
 
       <Divider />
 
-      <Text variant='headingXs' as='h5'>İlgili Koleksiyon</Text>
-      <CollectionPicker
-        selectedCollections={selectedAnswer.relatedCollections}
-        onCollectionsChange={handleCollectionsChange}
-      />
-
-      <Divider />
-
       <MetafieldPicker
         conditions={selectedAnswer.metafieldConditions}
         onConditionsChange={handleMetafieldConditionsChange}
@@ -128,6 +120,15 @@ export default function AnswerSettings({
           autoComplete="off"
         />
       )}
+
+      <Divider />
+
+      <Text variant='headingXs' as='h5'>İlgili Koleksiyon</Text>
+      <CollectionPicker
+        selectedCollections={selectedAnswer.relatedCollections}
+        onCollectionsChange={handleCollectionsChange}
+      />
+
     </div>
   );
 }

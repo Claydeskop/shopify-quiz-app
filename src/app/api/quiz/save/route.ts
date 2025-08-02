@@ -19,11 +19,31 @@ interface MetafieldCondition {
   value: string;
 }
 
+interface StyleSettings {
+  backgroundColor: string;
+  optionBackgroundColor: string;
+  titleFontSize: number;
+  questionFontSize: number;
+  optionFontSize: number;
+  quizBorderRadius: number;
+  optionBorderRadius: number;
+  quizBorderWidth: number;
+  quizBorderColor: string;
+  optionBorderWidth: number;
+  optionBorderColor: string;
+  buttonColor: string;
+  customCSS: string;
+}
+
 interface QuizData {
   title: string;
   quizType: string;
   internalQuizTitle: string;
   internalQuizDescription: string;
+  isActive: boolean;
+  autoTransition: boolean;
+  selectedCollections: any[];
+  styles?: StyleSettings;
   questions: Array<{
     id: string;
     text: string;
@@ -40,40 +60,12 @@ interface QuizData {
     redirectToLink: boolean;
     redirectUrl: string;
     metafieldConditions: MetafieldCondition[];
+    relatedProducts: any[];
+    relatedTags: string[];
+    relatedCategories: string[];
   }>;
 }
 
-async function generateUniqueSlug(): Promise<string> {
-  const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
-  let attempts = 0;
-  const maxAttempts = 10;
-  
-  while (attempts < maxAttempts) {
-    let result = '';
-    for (let i = 0; i < 8; i++) {
-      result += characters.charAt(Math.floor(Math.random() * characters.length));
-    }
-    
-    // Check if slug already exists
-    const { data, error } = await supabase
-      .from('quizzes')
-      .select('id')
-      .eq('slug', result)
-      .single();
-    
-    if (error && error.code === 'PGRST116') {
-      // No existing quiz found with this slug, so it's unique
-      return result;
-    }
-    
-    attempts++;
-  }
-  
-  // Fallback: use timestamp + random string
-  const timestamp = Date.now().toString(36);
-  const random = Math.random().toString(36).substring(2, 6);
-  return `${timestamp}${random}`;
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -85,11 +77,9 @@ export async function POST(request: NextRequest) {
       title: body.title,
       questionsCount: body.questions?.length || 0,
       answersCount: body.answers?.length || 0,
-      fullData: JSON.stringify(body, null, 2)
+      autoTransition: body.autoTransition,
+      selectedCollections: body.selectedCollections?.length || 0
     });
-
-    // Generate unique slug
-    const uniqueSlug = await generateUniqueSlug();
 
     // Start transaction
     const { data: quiz, error: quizError } = await supabase
@@ -98,12 +88,27 @@ export async function POST(request: NextRequest) {
         shop_domain: shopDomain,
         title: body.title,
         quiz_type: body.quizType,
-        slug: uniqueSlug,
-        is_active: true,
+        is_active: body.isActive,
+        auto_transition: body.autoTransition,
+        selected_collections: body.selectedCollections || [],
         internal_quiz_title: body.internalQuizTitle,
         internal_quiz_description: body.internalQuizDescription,
-        shopify_collection_ids: [], // Will be populated from related collections
-        styles: {},
+        shopify_collection_ids: body.selectedCollections?.map(c => c.id) || [],
+        styles: body.styles || {
+          backgroundColor: '#2c5aa0',
+          optionBackgroundColor: '#ffffff',
+          titleFontSize: 32,
+          questionFontSize: 24,
+          optionFontSize: 18,
+          quizBorderRadius: 24,
+          optionBorderRadius: 12,
+          quizBorderWidth: 0,
+          quizBorderColor: '#ffffff',
+          optionBorderWidth: 2,
+          optionBorderColor: '#ffffff',
+          buttonColor: '#ff6b6b',
+          customCSS: ''
+        },
         settings: {}
       })
       .select()
@@ -165,6 +170,9 @@ export async function POST(request: NextRequest) {
       answer_media: answer.answerMedia,
       redirect_to_link: answer.redirectToLink,
       redirect_url: answer.redirectUrl,
+      related_products: answer.relatedProducts || [],
+      related_tags: answer.relatedTags || [],
+      related_categories: answer.relatedCategories || [],
       answer_order: index + 1,
       is_default: false,
       weight: 1

@@ -24,6 +24,22 @@ interface Answer {
   metafieldConditions: any[];
 }
 
+interface StyleSettings {
+  backgroundColor: string;
+  optionBackgroundColor: string;
+  titleFontSize: number;
+  questionFontSize: number;
+  optionFontSize: number;
+  quizBorderRadius: number;
+  optionBorderRadius: number;
+  quizBorderWidth: number;
+  quizBorderColor: string;
+  optionBorderWidth: number;
+  optionBorderColor: string;
+  buttonColor: string;
+  customCSS: string;
+}
+
 interface QuizBuilderProps {
   quizTitle: string;
   quizType: string;
@@ -42,6 +58,26 @@ const QuizBuilder = forwardRef<any, QuizBuilderProps>((props, ref) => {
   const [internalQuizTitle, setInternalQuizTitle] = useState<string>('Bu quiz hangi ürün size en uygun olduğunu bulmanıza yardımcı olacak');
   const [internalQuizDescription, setInternalQuizDescription] = useState<string>('Kişisel tercihlerinizi ve ihtiyaçlarınızı anlayarak size özel ürün önerileri sunuyoruz. Sadece birkaç soruyu yanıtlayın ve size en uygun seçenekleri keşfedin.');
   const [quizImage, setQuizImage] = useState<string | null>(null);
+  const [isActive, setIsActive] = useState<boolean>(false);
+  const [autoTransition, setAutoTransition] = useState<boolean>(false);
+  const [selectedCollections, setSelectedCollections] = useState<any[]>([]);
+  
+  // Style settings state
+  const [styleSettings, setStyleSettings] = useState<StyleSettings>({
+    backgroundColor: '#2c5aa0',
+    optionBackgroundColor: '#ffffff',
+    titleFontSize: 32,
+    questionFontSize: 24,
+    optionFontSize: 18,
+    quizBorderRadius: 24,
+    optionBorderRadius: 12,
+    quizBorderWidth: 0,
+    quizBorderColor: '#ffffff',
+    optionBorderWidth: 2,
+    optionBorderColor: '#ffffff',
+    buttonColor: '#ff6b6b',
+    customCSS: ''
+  });
   
   // Save state
   const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -154,6 +190,10 @@ const QuizBuilder = forwardRef<any, QuizBuilderProps>((props, ref) => {
     setQuizImage(imageUrl);
   };
 
+  const handleStyleChange = (styles: StyleSettings) => {
+    setStyleSettings(styles);
+  };
+
   // Question settings handlers
   const handleQuestionShowAnswersChange = (questionId: string, value: boolean) => {
     setQuestions(prev => 
@@ -204,6 +244,7 @@ const QuizBuilder = forwardRef<any, QuizBuilderProps>((props, ref) => {
     );
   };
 
+
   const handleSaveQuiz = async () => {
     try {
       setIsSaving(true);
@@ -222,8 +263,13 @@ const QuizBuilder = forwardRef<any, QuizBuilderProps>((props, ref) => {
         quizType: props.quizType,
         internalQuizTitle,
         internalQuizDescription,
+        quizImage,
+        isActive,
+        autoTransition,
+        selectedCollections,
         questions,
-        answers
+        answers,
+        styles: styleSettings
       };
 
       const response = await fetch('/api/quiz/save', {
@@ -264,6 +310,28 @@ const QuizBuilder = forwardRef<any, QuizBuilderProps>((props, ref) => {
     setInternalQuizTitle(quizData.internalQuizTitle || '');
     setInternalQuizDescription(quizData.internalQuizDescription || '');
     setQuizImage(quizData.quizImage || null);
+    setIsActive(quizData.is_active || false);
+    setAutoTransition(quizData.auto_transition || false);
+    setSelectedCollections(quizData.selected_collections || []);
+    
+    // Reset to default styles if no styles provided, don't use previous styleSettings
+    const defaultStyles = {
+      backgroundColor: '#2c5aa0',
+      optionBackgroundColor: '#ffffff',
+      titleFontSize: 32,
+      questionFontSize: 24,
+      optionFontSize: 18,
+      quizBorderRadius: 24,
+      optionBorderRadius: 12,
+      quizBorderWidth: 0,
+      quizBorderColor: '#ffffff',
+      optionBorderWidth: 2,
+      optionBorderColor: '#ffffff',
+      buttonColor: '#ff6b6b',
+      customCSS: ''
+    };
+    
+    setStyleSettings(quizData.styles || defaultStyles);
     setSelectedQuestionId(null);
     setSelectedAnswerId(null);
     setActiveTab('information');
@@ -275,11 +343,16 @@ const QuizBuilder = forwardRef<any, QuizBuilderProps>((props, ref) => {
       internalQuizTitle,
       internalQuizDescription,
       quizImage,
+      isActive,
+      autoTransition,
+      selectedCollections,
       questions,
-      answers
+      answers,
+      styles: styleSettings
     }),
+    saveQuiz: handleSaveQuiz,
     loadQuizData
-  }), [internalQuizTitle, internalQuizDescription, quizImage, questions, answers]);
+  }), [internalQuizTitle, internalQuizDescription, quizImage, isActive, autoTransition, selectedCollections, questions, answers, styleSettings]);
 
   return (
     <div style={{ 
@@ -319,6 +392,7 @@ const QuizBuilder = forwardRef<any, QuizBuilderProps>((props, ref) => {
           internalQuizTitle={internalQuizTitle}
           internalQuizDescription={internalQuizDescription}
           quizImage={quizImage}
+          styles={styleSettings}
           onQuestionSelect={handleQuestionSelect}
           onTabChange={handleTabChange}
         />
@@ -337,9 +411,15 @@ const QuizBuilder = forwardRef<any, QuizBuilderProps>((props, ref) => {
           quizName={props.quizTitle}
           quizTitle={internalQuizTitle}
           quizImage={quizImage}
+          isActive={isActive}
+          autoTransition={autoTransition}
+          selectedCollections={selectedCollections}
           onQuizNameChange={props.onTitleChange}
           onQuizTitleChange={handleInternalQuizTitleChange}
           onQuizImageChange={handleQuizImageChange}
+          onIsActiveChange={setIsActive}
+          onAutoTransitionChange={setAutoTransition}
+          onCollectionsChange={setSelectedCollections}
           internalQuizTitle={internalQuizTitle}
           internalQuizDescription={internalQuizDescription}
           onInternalQuizTitleChange={handleInternalQuizTitleChange}
@@ -352,6 +432,8 @@ const QuizBuilder = forwardRef<any, QuizBuilderProps>((props, ref) => {
           onAnswerRedirectToLinkChange={handleAnswerRedirectToLinkChange}
           onAnswerRedirectUrlChange={handleAnswerRedirectUrlChange}
           onAnswerMetafieldConditionsChange={handleAnswerMetafieldConditionsChange}
+          styleSettings={styleSettings}
+          onStyleChange={handleStyleChange}
         />
       </div>
     </div>

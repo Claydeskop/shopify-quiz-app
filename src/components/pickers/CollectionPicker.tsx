@@ -29,6 +29,7 @@ export default function CollectionPicker({ selectedCollections, onCollectionsCha
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+
   useEffect(() => {
     fetchCollections();
   }, []);
@@ -94,8 +95,8 @@ export default function CollectionPicker({ selectedCollections, onCollectionsCha
 
   if (loading) {
     return (
-      <Box>
-        <Text variant='headingSm' as='h4'>Collection Selection</Text>
+      <Box paddingBlockStart="400" paddingBlockEnd="400">
+        <Text variant='bodyMd' fontWeight="medium">Quiz Collection</Text>
         <Box paddingBlockStart='200'>
           <div style={{ display: 'flex', justifyContent: 'center', padding: '24px' }}>
             <Spinner size="small" />
@@ -107,8 +108,8 @@ export default function CollectionPicker({ selectedCollections, onCollectionsCha
 
   if (error) {
     return (
-      <Box>
-        <Text variant='headingSm' as='h4'>Collection Selection</Text>
+      <Box paddingBlockStart="400" paddingBlockEnd="400">
+        <Text variant='bodyMd' fontWeight="medium">Quiz Collection</Text>
         <Box paddingBlockStart='200'>
           <Text variant='bodyMd' tone='critical'>
             {error}
@@ -119,8 +120,8 @@ export default function CollectionPicker({ selectedCollections, onCollectionsCha
   }
 
   return (
-    <Box>
-      <Text variant='headingSm' as='h4'>Collection Selection</Text>
+    <Box paddingBlockStart="400" paddingBlockEnd="400">
+      <Text variant='bodyMd' fontWeight="medium">Quiz Collection</Text>
       <Box paddingBlockStart='200'>
         
         {selectedCollections.length > 0 && (

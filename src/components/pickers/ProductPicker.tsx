@@ -7,8 +7,7 @@ import {
   Text,
   Thumbnail,
   Card,
-  Badge,
-  Tag
+  Badge
 } from '@shopify/polaris';
 import { useEffect, useState } from 'react';
 
@@ -28,6 +27,12 @@ interface ProductPickerProps {
 }
 
 export default function ProductPicker({ selectedProducts, onProductsChange }: ProductPickerProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     // Listen for messages from modal
@@ -35,6 +40,7 @@ export default function ProductPicker({ selectedProducts, onProductsChange }: Pr
       if (event.data?.type === 'PRODUCT_SELECTION') {
         console.log('Received product selection:', event.data.selection);
         onProductsChange(event.data.selection);
+        setIsModalOpen(false);
       }
     };
 
@@ -43,86 +49,85 @@ export default function ProductPicker({ selectedProducts, onProductsChange }: Pr
   }, [onProductsChange]);
 
   const handleOpenPicker = () => {
-    console.log('Opening product picker in new window...');
-    const popup = window.open('/product-picker-modal', 'productPickerModal', 'width=800,height=600,scrollbars=yes,resizable=yes');
-    
-    if (popup) {
-      // Focus the popup window
-      popup.focus();
-    }
+    setIsModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
   };
 
   const removeProduct = (productId: string) => {
     onProductsChange(selectedProducts.filter(p => p.id !== productId));
   };
 
+  const removeAllProducts = () => {
+    onProductsChange([]);
+  };
+
   return (
     <Box>
-      <Text variant='headingSm' as='h4'>Product Selection</Text>
-      <Box paddingBlockStart='200'>
-        
-        {/* Selected Products Preview */}
-        {selectedProducts.length > 0 && (
-          <Box paddingBlockEnd='300'>
-            <Text variant='headingXs' as='h5' marginBlockEnd='200'>
-              Selected products ({selectedProducts.length})
-            </Text>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {selectedProducts.map((product) => (
-                <Card key={product.id}>
-                  <Box padding='300'>
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                      {product.image ? (
-                        <Thumbnail
-                          source={product.image}
-                          alt={product.title}
-                          size="small"
-                        />
-                      ) : (
-                        <div style={{
-                          width: '40px',
-                          height: '40px',
-                          backgroundColor: '#f6f6f7',
-                          borderRadius: '6px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '16px'
-                        }}>
-                          📦
-                        </div>
-                      )}
-                      <div style={{ flex: 1 }}>
-                        <Text variant='bodyMd' fontWeight="semibold" as='h6'>
-                          {product.title}
-                        </Text>
-                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '4px' }}>
-                          <Text variant='bodySm' tone='subdued'>
-                            by {product.vendor}
-                          </Text>
-                          {product.price && (
-                            <Badge tone='info'>
-                              ${product.price}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                      <Button 
-                        size='micro' 
-                        variant='tertiary' 
-                        onClick={() => removeProduct(product.id)}
-                      >
-                        Remove
-                      </Button>
-                    </div>
-                  </Box>
-                </Card>
-              ))}
-            </div>
-          </Box>
-        )}
-
-        {/* Product Picker Button */}
+      {/* Selected Products Preview */}
+      {selectedProducts.length > 0 ? (
+        <Box paddingBlockEnd='300'>
+          <Text variant='headingXs' as='h5' marginBlockEnd='200'>
+            Seçili ürünler ({selectedProducts.length})
+          </Text>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
+            {selectedProducts.slice(0, 3).map((product) => (
+              <div key={product.id} style={{ display: 'flex', gap: '8px', alignItems: 'center', padding: '8px', backgroundColor: '#f6f6f7', borderRadius: '6px' }}>
+                {product.image ? (
+                  <Thumbnail
+                    source={product.image}
+                    alt={product.title}
+                    size="small"
+                  />
+                ) : (
+                  <div style={{
+                    width: '32px',
+                    height: '32px',
+                    backgroundColor: '#e1e3e5',
+                    borderRadius: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '12px'
+                  }}>
+                    📦
+                  </div>
+                )}
+                <div style={{ flex: 1 }}>
+                  <Text variant='bodySm' fontWeight="semibold" as='h6'>
+                    {product.title}
+                  </Text>
+                  <Text variant='bodyXs' tone='subdued'>
+                    {product.vendor}
+                  </Text>
+                </div>
+                <Button 
+                  size='micro' 
+                  variant='tertiary' 
+                  onClick={() => removeProduct(product.id)}
+                >
+                  ×
+                </Button>
+              </div>
+            ))}
+            {selectedProducts.length > 3 && (
+              <Text variant='bodyXs' tone='subdued'>
+                +{selectedProducts.length - 3} more products
+              </Text>
+            )}
+          </div>
+          <ButtonGroup>
+            <Button size='slim' onClick={handleOpenPicker}>
+              Ürün Değiştir
+            </Button>
+            <Button size='slim' variant='tertiary' onClick={removeAllProducts}>
+              Tümünü Kaldır
+            </Button>
+          </ButtonGroup>
+        </Box>
+      ) : (
         <div style={{
           border: '2px dashed #e1e3e5',
           borderRadius: '8px',
@@ -133,16 +138,55 @@ export default function ProductPicker({ selectedProducts, onProductsChange }: Pr
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
             <div style={{ fontSize: '32px', opacity: 0.4 }}>📦</div>
             <Text as='p' variant='bodyMd' tone='subdued'>
-              {selectedProducts.length > 0 
-                ? 'Add more products to your selection' 
-                : 'Select products to connect to your quiz'}
+              Ürün seçin
             </Text>
             <Button onClick={handleOpenPicker}>
-              {selectedProducts.length > 0 ? 'Add More Products' : 'Select from Products'}
+              Ürünlerden Seç
             </Button>
           </div>
         </div>
-      </Box>
+      )}
+
+      {/* Product Picker Modal */}
+      {isMounted && isModalOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            width: '90%',
+            maxWidth: '800px',
+            maxHeight: '90%',
+            overflow: 'hidden',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+          }}>
+            <iframe
+              src="/product-picker-modal"
+              style={{
+                width: '100%',
+                height: '600px',
+                border: 'none'
+              }}
+              title="Product Picker"
+            />
+            <div style={{ padding: '16px', borderTop: '1px solid #e1e3e5' }}>
+              <Button onClick={handleModalClose}>
+                Kapat
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </Box>
   );
 }
