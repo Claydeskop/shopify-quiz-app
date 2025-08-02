@@ -48,13 +48,13 @@ export async function GET(
         image: quiz.quiz_image || null,
         slug: quiz.slug,
         style_settings: quiz.styles,
-        questions: quiz.questions?.map((question: any) => ({
+        questions: quiz.questions?.map((question: { id: string; text: string; question_media: string; show_answers: boolean; allow_multiple_selection: boolean; answers?: Array<{ id: string; text: string; answer_media: string; collections: any[]; categories: any[]; products: any[]; tags: any[] }> }) => ({
           id: question.id,
           text: question.text,
           questionMedia: question.question_media,
           showAnswers: question.show_answers,
           allowMultipleSelection: question.allow_multiple_selection,
-          answers: question.answers?.map((answer: any) => ({
+          answers: question.answers?.map((answer: { id: string; text: string; answer_media: string; collections: any[]; categories: any[]; products: any[]; tags: any[] }) => ({
             id: answer.id,
             text: answer.text,
             answerMedia: answer.answer_media,

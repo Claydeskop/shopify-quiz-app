@@ -10,8 +10,9 @@ import {
   Text
 } from '@shopify/polaris';
 import enTranslations from '@shopify/polaris/locales/en.json';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import QuizBuilder from '../components/QuizBuilder';
 import QuizList from '../components/QuizList';
 
@@ -217,10 +218,10 @@ function AppContent() {
     <>
       {/* Sol Navigation Menu */}
       <NavMenu>
-        <a href="/" rel="home">🏠 Dashboard</a>
-        <a href="/quizzes">📋 My Quizzes</a>
-        <a href="/analytics">📊 Analytics</a>
-        <a href="/templates">🎨 A/B Testing</a>
+        <Link href="/">🏠 Dashboard</Link>
+        <Link href="/quizzes">📋 My Quizzes</Link>
+        <Link href="/analytics">📊 Analytics</Link>
+        <Link href="/templates">🎨 A/B Testing</Link>
       </NavMenu>
 
       <Page
@@ -309,11 +310,11 @@ function AppContent() {
         <Modal id="delete-quiz-modal" variant="small">
           <Box padding="400">
             <Text variant="headingMd" as="h3">
-              Quiz'i Sil
+              Quiz&apos;i Sil
             </Text>
             <Box paddingBlock="300">
               <Text as="p">
-                Bu quiz'i silmek istediğinizden emin misiniz? Bu işlem geri alınamaz ve tüm quiz verileri kalıcı olarak silinecektir.
+                Bu quiz&apos;i silmek istediğinizden emin misiniz? Bu işlem geri alınamaz ve tüm quiz verileri kalıcı olarak silinecektir.
               </Text>
             </Box>
           </Box>

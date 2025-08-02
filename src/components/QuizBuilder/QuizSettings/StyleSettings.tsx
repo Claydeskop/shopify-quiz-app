@@ -197,7 +197,7 @@ export default function StyleSettingsComponent({ styles, onStyleChange }: StyleS
     }
   }, [styleState, onStyleChange]);
 
-  const handleStyleChange = (key: keyof StyleSettings, value: any) => {
+  const handleStyleChange = (key: keyof StyleSettings, value: string | number | boolean) => {
     setStyleState(prev => ({
       ...prev,
       [key]: value
@@ -434,13 +434,13 @@ export default function StyleSettingsComponent({ styles, onStyleChange }: StyleS
             border: '1px solid #e1e3e5'
           }}>
             <Text variant='bodySm' color='subdued'>
-              💡 <strong>Yardımcı CSS Sınıfları:</strong><br/>
-              <code>.quiz-container</code> - Ana quiz alanı<br/>
-              <code>.quiz-title</code> - Quiz başlığı<br/>
-              <code>.question-title</code> - Soru başlıkları<br/>
-              <code>.answer-option</code> - Şık kutusu<br/>
-              <code>.answer-text</code> - Şık metni<br/>
-              <code>.quiz-start-button</code> - Başlat butonu<br/>
+              💡 <strong>Yardımcı CSS Sınıfları:</strong><br />
+              <code>.quiz-container</code> - Ana quiz alanı<br />
+              <code>.quiz-title</code> - Quiz başlığı<br />
+              <code>.question-title</code> - Soru başlıkları<br />
+              <code>.answer-option</code> - Şık kutusu<br />
+              <code>.answer-text</code> - Şık metni<br />
+              <code>.quiz-start-button</code> - Başlat butonu<br />
               <code>#quiz-start-btn</code> - Başlat butonu (ID)
             </Text>
           </div>
