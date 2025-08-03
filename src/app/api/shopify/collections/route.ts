@@ -1,6 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateShopAccess, createShopifyApiUrl } from '@/lib/shopify-auth';
 
+// GraphQL response interfaces
+interface ShopifyCollectionNode {
+  id: string;
+  title: string;
+  handle: string;
+  description: string;
+  productsCount?: {
+    count: number;
+  };
+  image?: {
+    url: string;
+    altText?: string;
+  };
+}
+
+interface ShopifyCollectionEdge {
+  node: ShopifyCollectionNode;
+}
+
+interface ShopifyCollectionsResponse {
+  data: {
+    collections: {
+      edges: ShopifyCollectionEdge[];
+    };
+  };
+  errors?: unknown[];
+}
+
 const GET_COLLECTIONS_QUERY = `
   query getCollections($first: Int!) {
     collections(first: $first) {
@@ -53,7 +81,8 @@ async function fetchCollections(shop: string, accessToken: string, request: Next
     throw new Error(`GraphQL errors: ${JSON.stringify(data.errors)}`);
   }
 
-  const collections = data.data.collections.edges.map((edge: any) => ({
+  const responseData = data as ShopifyCollectionsResponse;
+  const collections = responseData.data.collections.edges.map((edge: ShopifyCollectionEdge) => ({
     id: edge.node.id.replace('gid://shopify/Collection/', ''),
     title: edge.node.title,
     handle: edge.node.handle,

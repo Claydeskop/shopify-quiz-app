@@ -1,38 +1,11 @@
 'use client';
 
 import { Text, TextField, RangeSlider, Select, BlockStack, Card, Divider } from '@shopify/polaris';
-
-interface StyleSettings {
-  // Soru Ekranı - Renkler
-  questionBackgroundColor: string;
-  questionOptionBackgroundColor: string;
-  questionOptionBorderColor: string;
-  questionTextColor: string;
-  questionOptionTextColor: string;
-  questionImageBorderColor: string;
-  questionSelectedOptionBackgroundColor: string;
-  questionSelectedOptionTextColor: string;
-  questionSelectedOptionBorderColor: string;
-
-  // Soru Ekranı - Borderlar
-  questionOptionBorderWidth: number;
-  questionOptionBorderRadius: number;
-  questionOptionBorderType: string;
-  questionImageBorderWidth: number;
-  questionImageBorderRadius: number;
-  questionImageBorderType: string;
-
-  // Soru Ekranı - Text & Sizes
-  questionTextSize: number;
-  questionImageHeight: number;
-  questionOptionTextSize: number;
-  questionOptionImageSize: number;
-  [key: string]: any;
-}
+import { StyleSettings, StyleChangeHandler } from '../../../types';
 
 interface QuestionScreenSettingsProps {
   styles: StyleSettings;
-  onStyleChange: (key: string, value: any) => void;
+  onStyleChange: StyleChangeHandler;
 }
 
 const ColorInput = ({ label, value, onChange }: { label: string, value: string, onChange: (value: string) => void }) => (

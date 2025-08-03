@@ -6,6 +6,7 @@ import CollectionPicker from '../../pickers/CollectionPicker';
 import MediaPicker from '../../pickers/MediaPicker';
 import TogglePicker from '../../pickers/TogglePicker';
 import CheckboxPicker from '../../pickers/CheckboxPicker';
+import { ShopifyCollection } from '../../../types';
 
 interface InformationSettingsProps {
   quizName: string;
@@ -14,14 +15,14 @@ interface InformationSettingsProps {
   quizImage: string | null;
   isActive: boolean;
   autoTransition: boolean;
-  selectedCollections: any[];
+  selectedCollections: ShopifyCollection[];
   onQuizNameChange: (value: string) => void;
   onQuizTitleChange: (value: string) => void;
   onQuizDescriptionChange: (value: string) => void;
   onQuizImageChange: (imageUrl: string | null) => void;
   onIsActiveChange: (value: boolean) => void;
   onAutoTransitionChange: (value: boolean) => void;
-  onCollectionsChange: (collections: any[]) => void;
+  onCollectionsChange: (collections: ShopifyCollection[]) => void;
 }
 
 export default function InformationSettings({ 
@@ -49,7 +50,7 @@ export default function InformationSettings({
     onQuizImageChange(null);
   };
 
-  const handleCollectionsChange = (collections: any[]) => {
+  const handleCollectionsChange = (collections: ShopifyCollection[]) => {
     onCollectionsChange(collections);
   };
 

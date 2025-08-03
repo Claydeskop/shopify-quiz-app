@@ -1,6 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateShopAccess, createShopifyApiUrl } from '@/lib/shopify-auth';
 
+// GraphQL response interfaces
+interface ShopifyProductNode {
+  id: string;
+  title: string;
+  handle: string;
+  vendor: string;
+  status: string;
+  featuredImage?: {
+    url: string;
+    altText?: string;
+  };
+  variants: {
+    edges: Array<{
+      node: {
+        price: string;
+      };
+    }>;
+  };
+}
+
+interface ShopifyProductEdge {
+  node: ShopifyProductNode;
+}
+
+interface ShopifyProductsResponse {
+  data: {
+    products: {
+      edges: ShopifyProductEdge[];
+    };
+  };
+  errors?: unknown[];
+}
+
 const GET_PRODUCTS_QUERY = `
   query getProducts($first: Int!, $query: String) {
     products(first: $first, query: $query) {
@@ -60,7 +93,8 @@ async function fetchProducts(shop: string, accessToken: string, request: NextReq
     throw new Error(`GraphQL errors: ${JSON.stringify(data.errors)}`);
   }
 
-  const products = data.data.products.edges.map((edge: any) => ({
+  const responseData = data as ShopifyProductsResponse;
+  const products = responseData.data.products.edges.map((edge: ShopifyProductEdge) => ({
     id: edge.node.id.replace('gid://shopify/Product/', ''),
     title: edge.node.title,
     handle: edge.node.handle,

@@ -11,6 +11,7 @@ import {
   Divider
 } from '@shopify/polaris';
 import { useEffect, useState } from 'react';
+import { ShopifyCollection } from '../../types';
 
 interface Quiz {
   id: string;
@@ -18,7 +19,7 @@ interface Quiz {
   quiz_type: string;
   is_active: boolean;
   auto_transition: boolean;
-  selected_collections: any[];
+  selected_collections: ShopifyCollection[];
   internal_quiz_title: string;
   internal_quiz_description: string;
   created_at: string;

@@ -1,24 +1,11 @@
 'use client';
 
 import { Text, TextField, RangeSlider, Select, BlockStack, Card } from '@shopify/polaris';
-
-interface StyleSettings {
-  // Geçiş Butonları
-  navButtonBorderWidth: number;
-  navButtonBorderColor: string;
-  navButtonBorderType: string;
-  navButtonBorderRadius: number;
-  navButtonTextSize: number;
-  navButtonTextType: string;
-  navPrevButtonColor: string;
-  navPrevButtonTextColor: string;
-  navOkIconColor: string;
-  [key: string]: any;
-}
+import { StyleSettings, StyleChangeHandler } from '../../../types';
 
 interface NavigationButtonsProps {
   styles: StyleSettings;
-  onStyleChange: (key: string, value: any) => void;
+  onStyleChange: StyleChangeHandler;
 }
 
 const ColorInput = ({ label, value, onChange }: { label: string, value: string, onChange: (value: string) => void }) => (

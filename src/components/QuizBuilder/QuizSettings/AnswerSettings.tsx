@@ -5,16 +5,17 @@ import { useState } from 'react';
 import MediaPicker from '../../pickers/MediaPicker';
 import CollectionPicker from '../../pickers/CollectionPicker';
 import MetafieldPicker from '../../pickers/MetafieldPicker';
+import { ShopifyCollection, AnswerCondition } from '../../../types';
 
 interface Answer {
   id: string;
   text: string;
   questionId: string;
   answerMedia: string | null;
-  relatedCollections: any[];
+  relatedCollections: ShopifyCollection[];
   redirectToLink: boolean;
   redirectUrl: string;
-  metafieldConditions: any[];
+  metafieldConditions: AnswerCondition[];
 }
 
 interface AnswerSettingsProps {
@@ -22,10 +23,10 @@ interface AnswerSettingsProps {
   answers: Answer[];
   onAnswerTextChange: (answerId: string, text: string) => void;
   onAnswerMediaChange: (answerId: string, mediaUrl: string | null) => void;
-  onAnswerCollectionsChange: (answerId: string, collections: any[]) => void;
+  onAnswerCollectionsChange: (answerId: string, collections: ShopifyCollection[]) => void;
   onAnswerRedirectToLinkChange: (answerId: string, value: boolean) => void;
   onAnswerRedirectUrlChange: (answerId: string, url: string) => void;
-  onAnswerMetafieldConditionsChange: (answerId: string, conditions: any[]) => void;
+  onAnswerMetafieldConditionsChange: (answerId: string, conditions: AnswerCondition[]) => void;
 }
 
 export default function AnswerSettings({ 
@@ -52,13 +53,13 @@ export default function AnswerSettings({
     }
   };
 
-  const handleCollectionsChange = (collections: any[]) => {
+  const handleCollectionsChange = (collections: ShopifyCollection[]) => {
     if (selectedAnswer) {
       onAnswerCollectionsChange(selectedAnswer.id, collections);
     }
   };
 
-  const handleMetafieldConditionsChange = (conditions: any[]) => {
+  const handleMetafieldConditionsChange = (conditions: AnswerCondition[]) => {
     if (selectedAnswer) {
       onAnswerMetafieldConditionsChange(selectedAnswer.id, conditions);
     }

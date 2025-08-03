@@ -10,6 +10,7 @@ import {
 } from '@shopify/polaris';
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ShopifyCollection, StyleSettings } from '../../types';
 
 interface Question {
   id: string;
@@ -24,108 +25,9 @@ interface Answer {
   text: string;
   questionId: string;
   answerMedia: string | null;
-  relatedCollections: any[];
+  relatedCollections: ShopifyCollection[];
   redirectToLink: boolean;
   redirectUrl: string;
-}
-
-interface StyleSettings {
-  // Genel
-  fontFamily: string;
-  animations: boolean;
-
-  // Giriş Ekranı - Renkler
-  introBackgroundColor: string;
-  introStartButtonColor: string;
-  introStartButtonTextColor: string;
-  introQuestionTextColor: string;
-  introDescriptionTextColor: string;
-  introStartButtonBorderColor: string;
-  introImageBorderColor: string;
-
-  // Giriş Ekranı - Borderlar
-  introButtonBorderWidth: number;
-  introButtonBorderRadius: number;
-  introButtonBorderType: string;
-  introImageBorderWidth: number;
-  introImageBorderRadius: number;
-  introImageBorderType: string;
-
-  // Giriş Ekranı - Text
-  introTitleSize: number;
-  introDescriptionSize: number;
-  introButtonTextSize: number;
-  introIconSize: number;
-  introImageHeight: number;
-
-  // Soru Ekranı - Renkler
-  questionBackgroundColor: string;
-  questionOptionBackgroundColor: string;
-  questionOptionBorderColor: string;
-  questionTextColor: string;
-  questionOptionTextColor: string;
-  questionImageBorderColor: string;
-  questionSelectedOptionBackgroundColor: string;
-  questionSelectedOptionTextColor: string;
-  questionSelectedOptionBorderColor: string;
-
-  // Soru Ekranı - Borderlar
-  questionOptionBorderWidth: number;
-  questionOptionBorderRadius: number;
-  questionOptionBorderType: string;
-  questionImageBorderWidth: number;
-  questionImageBorderRadius: number;
-  questionImageBorderType: string;
-
-  // Soru Ekranı - Text & Sizes
-  questionTextSize: number;
-  questionImageHeight: number;
-  questionOptionTextSize: number;
-  questionOptionImageSize: number;
-
-  // Geçiş Butonları
-  navButtonBorderWidth: number;
-  navButtonBorderColor: string;
-  navButtonBorderType: string;
-  navButtonBorderRadius: number;
-  navButtonTextSize: number;
-  navButtonTextType: string;
-  navPrevButtonColor: string;
-  navPrevButtonTextColor: string;
-  navOkIconColor: string;
-
-  // Soru Sayacı
-  counterBackgroundColor: string;
-  counterBorderColor: string;
-  counterTextColor: string;
-  counterBorderWidth: number;
-  counterBorderRadius: number;
-  counterBorderType: string;
-  counterTextSize: number;
-  counterTextStyle: string;
-
-  // Sonuç Ekranı
-  resultBackgroundColor: string;
-  resultTextColor: string;
-  resultButtonColor: string;
-  resultButtonTextColor: string;
-
-  // Özel CSS
-  customCSS: string;
-
-  // Eski alanlar backward compatibility için
-  backgroundColor?: string;
-  optionBackgroundColor?: string;
-  titleFontSize?: number;
-  questionFontSize?: number;
-  optionFontSize?: number;
-  quizBorderRadius?: number;
-  optionBorderRadius?: number;
-  quizBorderWidth?: number;
-  quizBorderColor?: string;
-  optionBorderWidth?: number;
-  optionBorderColor?: string;
-  buttonColor?: string;
 }
 
 interface QuizPreviewProps {

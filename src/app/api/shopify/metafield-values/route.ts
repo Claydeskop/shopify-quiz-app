@@ -1,6 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateShopAccess, createShopifyApiUrl } from '@/lib/shopify-auth';
 
+// GraphQL response interfaces
+interface MetafieldNode {
+  value: string;
+}
+
+interface ProductMetafieldNode {
+  metafield: MetafieldNode | null;
+}
+
+interface ProductMetafieldEdge {
+  node: ProductMetafieldNode;
+}
+
+interface MetafieldValuesResponse {
+  data: {
+    products: {
+      edges: ProductMetafieldEdge[];
+    };
+  };
+  errors?: unknown[];
+}
+
 const GET_METAFIELD_VALUES_QUERY = `
   query getMetafieldValues($first: Int!, $metafieldKey: String!, $namespace: String!) {
     products(first: $first) {
@@ -59,7 +81,8 @@ async function fetchMetafieldValues(shop: string, accessToken: string, request: 
   // Extract unique values from the products
   const values = new Set<string>();
   
-  data.data.products.edges.forEach((edge: any) => {
+  const responseData = data as MetafieldValuesResponse;
+  responseData.data.products.edges.forEach((edge: ProductMetafieldEdge) => {
     const metafield = edge.node.metafield;
     if (metafield && metafield.value) {
       values.add(metafield.value);

@@ -1,23 +1,11 @@
 'use client';
 
 import { Text, TextField, RangeSlider, Select, BlockStack, Card } from '@shopify/polaris';
-
-interface StyleSettings {
-  // Soru Sayacı
-  counterBackgroundColor: string;
-  counterBorderColor: string;
-  counterTextColor: string;
-  counterBorderWidth: number;
-  counterBorderRadius: number;
-  counterBorderType: string;
-  counterTextSize: number;
-  counterTextStyle: string;
-  [key: string]: any;
-}
+import { StyleSettings, StyleChangeHandler } from '../../../types';
 
 interface QuestionCounterProps {
   styles: StyleSettings;
-  onStyleChange: (key: string, value: any) => void;
+  onStyleChange: StyleChangeHandler;
 }
 
 const ColorInput = ({ label, value, onChange }: { label: string, value: string, onChange: (value: string) => void }) => (

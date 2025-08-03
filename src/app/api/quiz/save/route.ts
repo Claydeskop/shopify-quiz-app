@@ -1,39 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import {
+  StyleSettings,
+  AnswerCondition,
+  ShopifyCollection,
+  ShopifyProduct,
+  ApiResponse
+} from '@/types';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
-
-interface MetafieldCondition {
-  id: string;
-  metafield?: {
-    id: string;
-    key: string;
-    namespace: string;
-    name: string;
-    type: string;
-  };
-  operator: 'equals' | 'not_equals';
-  value: string;
-}
-
-interface StyleSettings {
-  backgroundColor: string;
-  optionBackgroundColor: string;
-  titleFontSize: number;
-  questionFontSize: number;
-  optionFontSize: number;
-  quizBorderRadius: number;
-  optionBorderRadius: number;
-  quizBorderWidth: number;
-  quizBorderColor: string;
-  optionBorderWidth: number;
-  optionBorderColor: string;
-  buttonColor: string;
-  customCSS: string;
-}
 
 interface QuizData {
   title: string;
@@ -42,7 +20,7 @@ interface QuizData {
   internalQuizDescription: string;
   isActive: boolean;
   autoTransition: boolean;
-  selectedCollections: any[];
+  selectedCollections: ShopifyCollection[];
   styles?: StyleSettings;
   questions: Array<{
     id: string;
@@ -56,11 +34,11 @@ interface QuizData {
     text: string;
     questionId: string;
     answerMedia: string | null;
-    relatedCollections: any[];
+    relatedCollections: ShopifyCollection[];
     redirectToLink: boolean;
     redirectUrl: string;
-    metafieldConditions: MetafieldCondition[];
-    relatedProducts: any[];
+    metafieldConditions: AnswerCondition[];
+    relatedProducts: ShopifyProduct[];
     relatedTags: string[];
     relatedCategories: string[];
   }>;
@@ -93,7 +71,7 @@ export async function POST(request: NextRequest) {
         selected_collections: body.selectedCollections || [],
         internal_quiz_title: body.internalQuizTitle,
         internal_quiz_description: body.internalQuizDescription,
-        shopify_collection_ids: body.selectedCollections?.map(c => c.id) || [],
+        shopify_collection_ids: body.selectedCollections?.map((c: ShopifyCollection) => c.id) || [],
         styles: body.styles || {
           backgroundColor: '#2c5aa0',
           optionBackgroundColor: '#ffffff',
@@ -202,17 +180,26 @@ export async function POST(request: NextRequest) {
     });
 
     // Save metafield conditions
-    const metafieldConditionsToInsert: any[] = [];
+    const metafieldConditionsToInsert: Array<{
+      answer_id: string;
+      metafield_namespace: string;
+      metafield_key: string;
+      metafield_name: string;
+      metafield_type: string;
+      operator: string;
+      expected_value: string;
+      weight: number;
+    }> = [];
     body.answers.forEach((answer) => {
       if (answer.metafieldConditions && answer.metafieldConditions.length > 0) {
         answer.metafieldConditions.forEach((condition) => {
           if (condition.metafield && condition.value) {
             metafieldConditionsToInsert.push({
               answer_id: answerIdMap[answer.id],
-              metafield_namespace: condition.metafield.namespace,
-              metafield_key: condition.metafield.key,
-              metafield_name: condition.metafield.name,
-              metafield_type: condition.metafield.type,
+              metafield_namespace: condition.metafield!.namespace,
+              metafield_key: condition.metafield!.key,
+              metafield_name: condition.metafield!.description || condition.metafield!.key,
+              metafield_type: condition.metafield!.type,
               operator: condition.operator,
               expected_value: condition.value,
               weight: 1
@@ -237,10 +224,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Save answer-collection relationships
-    const answerCollectionsToInsert: any[] = [];
+    const answerCollectionsToInsert: Array<{
+      answer_id: string;
+      shopify_collection_id: string;
+      collection_order: number;
+    }> = [];
     body.answers.forEach((answer) => {
       if (answer.relatedCollections && answer.relatedCollections.length > 0) {
-        answer.relatedCollections.forEach((collection, index) => {
+        answer.relatedCollections.forEach((collection: ShopifyCollection, index: number) => {
           if (collection.id) {
             answerCollectionsToInsert.push({
               answer_id: answerIdMap[answer.id],

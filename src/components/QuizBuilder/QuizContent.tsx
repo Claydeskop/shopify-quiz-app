@@ -3,6 +3,7 @@
 import { Box, Card, Text } from '@shopify/polaris';
 import { useEffect, useRef } from 'react';
 import QuestionBuilder from './QuestionBuilder';
+import { ShopifyCollection } from '../../types';
 
 interface Question {
   id: string;
@@ -17,7 +18,7 @@ interface Answer {
   text: string;
   questionId: string;
   answerMedia: string | null;
-  relatedCollections: any[];
+  relatedCollections: ShopifyCollection[];
   redirectToLink: boolean;
   redirectUrl: string;
 }

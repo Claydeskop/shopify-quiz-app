@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ShopifyCollection, StyleSettings } from '../../types';
 
 interface Question {
   id: string;
@@ -18,7 +19,7 @@ interface Answer {
   answerMedia: string | null;
   redirectToLink: boolean;
   redirectUrl: string;
-  relatedCollections: any[];
+  relatedCollections: ShopifyCollection[];
 }
 
 interface Quiz {
@@ -27,7 +28,7 @@ interface Quiz {
   description: string;
   image: string | null;
   slug: string;
-  style_settings: any;
+  style_settings: StyleSettings;
   questions: Question[];
 }
 

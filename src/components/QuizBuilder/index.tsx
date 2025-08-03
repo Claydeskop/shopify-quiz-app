@@ -4,40 +4,12 @@ import { useState, forwardRef, useImperativeHandle } from 'react';
 import QuizContent from './QuizContent';
 import QuizPreview from './QuizPreview';
 import QuizSettings from './QuizSettings';
+import type { Question, Answer, StyleSettings, QuizFormData, Quiz, ShopifyCollection, AnswerCondition } from '@/types';
 
-interface Question {
-  id: string;
-  text: string;
-  showAnswers: boolean;
-  allowMultipleSelection: boolean;
-  questionMedia: string | null;
-}
-
-interface Answer {
-  id: string;
-  text: string;
-  questionId: string;
-  answerMedia: string | null;
-  relatedCollections: any[];
-  redirectToLink: boolean;
-  redirectUrl: string;
-  metafieldConditions: any[];
-}
-
-interface StyleSettings {
-  backgroundColor: string;
-  optionBackgroundColor: string;
-  titleFontSize: number;
-  questionFontSize: number;
-  optionFontSize: number;
-  quizBorderRadius: number;
-  optionBorderRadius: number;
-  quizBorderWidth: number;
-  quizBorderColor: string;
-  optionBorderWidth: number;
-  optionBorderColor: string;
-  buttonColor: string;
-  customCSS: string;
+interface QuizBuilderRef {
+  getQuizData: () => QuizFormData;
+  saveQuiz: () => Promise<void>;
+  loadQuizData: (quizData: Partial<Quiz>) => void;
 }
 
 interface QuizBuilderProps {
@@ -47,10 +19,9 @@ interface QuizBuilderProps {
   onTypeChange: (value: string) => void;
 }
 
-const QuizBuilder = forwardRef<any, QuizBuilderProps>((props, ref) => {
+const QuizBuilder = forwardRef<QuizBuilderRef, QuizBuilderProps>((props, ref) => {
   const [activeTab, setActiveTab] = useState('information');
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [answers, setAnswers] = useState<Answer[]>([]);
   const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null);
   const [selectedAnswerId, setSelectedAnswerId] = useState<string | null>(null);
   
@@ -59,8 +30,6 @@ const QuizBuilder = forwardRef<any, QuizBuilderProps>((props, ref) => {
   const [internalQuizDescription, setInternalQuizDescription] = useState<string>('Kişisel tercihlerinizi ve ihtiyaçlarınızı anlayarak size özel ürün önerileri sunuyoruz. Sadece birkaç soruyu yanıtlayın ve size en uygun seçenekleri keşfedin.');
   const [quizImage, setQuizImage] = useState<string | null>(null);
   const [isActive, setIsActive] = useState<boolean>(false);
-  const [autoTransition, setAutoTransition] = useState<boolean>(false);
-  const [selectedCollections, setSelectedCollections] = useState<any[]>([]);
   
   // Style settings state
   const [styleSettings, setStyleSettings] = useState<StyleSettings>({
@@ -101,9 +70,10 @@ const QuizBuilder = forwardRef<any, QuizBuilderProps>((props, ref) => {
     const newQuestion: Question = {
       id: `question-${Date.now()}`,
       text: 'What is your question?',
-      showAnswers: true,
-      allowMultipleSelection: false,
-      questionMedia: null,
+      question_media: undefined,
+      show_answers: true,
+      allow_multiple_selection: false,
+      answers: []
     };
     setQuestions(prev => [...prev, newQuestion]);
     setSelectedQuestionId(newQuestion.id);
@@ -136,43 +106,61 @@ const QuizBuilder = forwardRef<any, QuizBuilderProps>((props, ref) => {
     const newAnswer: Answer = {
       id: `answer-${Date.now()}`,
       text: 'Enter answer option',
-      questionId,
-      answerMedia: null,
-      relatedCollections: [],
-      redirectToLink: false,
-      redirectUrl: '',
-      metafieldConditions: []
+      answer_media: undefined,
+      redirect_to_link: undefined,
+      collections: [],
+      categories: [],
+      products: [],
+      tags: [],
+      conditions: []
     };
-    setAnswers(prev => [...prev, newAnswer]);
+    
+    // Add answer to the specific question
+    setQuestions(prev => 
+      prev.map(q => 
+        q.id === questionId 
+          ? { ...q, answers: [...q.answers, newAnswer] }
+          : q
+      )
+    );
+    
     setSelectedAnswerId(newAnswer.id);
     setActiveTab('questions');
   };
 
   const handleAnswerSelect = (answerId: string) => {
     setSelectedAnswerId(answerId);
-    // Keep the question selected but don't clear it
-    const answer = answers.find(a => a.id === answerId);
-    if (answer) {
-      setSelectedQuestionId(answer.questionId);
+    // Note: Answer interface doesn't have questionId, need to find by checking question.answers
+    const question = questions.find(q => q.answers.some(a => a.id === answerId));
+    if (question) {
+      setSelectedQuestionId(question.id);
     }
     setActiveTab('questions');
   };
 
   const handleAnswerReorder = (questionId: string, dragIndex: number, hoverIndex: number) => {
-    const questionAnswers = answers.filter(a => a.questionId === questionId);
-    const otherAnswers = answers.filter(a => a.questionId !== questionId);
-    
-    const newQuestionAnswers = [...questionAnswers];
-    const draggedItem = newQuestionAnswers[dragIndex];
-    newQuestionAnswers.splice(dragIndex, 1);
-    newQuestionAnswers.splice(hoverIndex, 0, draggedItem);
-    
-    setAnswers([...otherAnswers, ...newQuestionAnswers]);
+    setQuestions(prev => 
+      prev.map(q => {
+        if (q.id === questionId) {
+          const newAnswers = [...q.answers];
+          const draggedItem = newAnswers[dragIndex];
+          newAnswers.splice(dragIndex, 1);
+          newAnswers.splice(hoverIndex, 0, draggedItem);
+          return { ...q, answers: newAnswers };
+        }
+        return q;
+      })
+    );
   };
 
   const handleAnswerTextChange = (answerId: string, text: string) => {
-    setAnswers(prev => 
-      prev.map(a => a.id === answerId ? { ...a, text } : a)
+    setQuestions(prev => 
+      prev.map(q => ({
+        ...q,
+        answers: q.answers.map(a => 
+          a.id === answerId ? { ...a, text } : a
+        )
+      }))
     );
   };
 
@@ -197,50 +185,64 @@ const QuizBuilder = forwardRef<any, QuizBuilderProps>((props, ref) => {
   // Question settings handlers
   const handleQuestionShowAnswersChange = (questionId: string, value: boolean) => {
     setQuestions(prev => 
-      prev.map(q => q.id === questionId ? { ...q, showAnswers: value } : q)
+      prev.map(q => q.id === questionId ? { ...q, show_answers: value } : q)
     );
   };
 
   const handleQuestionAllowMultipleSelectionChange = (questionId: string, value: boolean) => {
     setQuestions(prev => 
-      prev.map(q => q.id === questionId ? { ...q, allowMultipleSelection: value } : q)
+      prev.map(q => q.id === questionId ? { ...q, allow_multiple_selection: value } : q)
     );
   };
 
-  const handleQuestionMediaChange = (questionId: string, mediaUrl: string | null) => {
+  const handleQuestionMediaChange = (questionId: string, mediaUrl: string | undefined) => {
     setQuestions(prev => 
-      prev.map(q => q.id === questionId ? { ...q, questionMedia: mediaUrl } : q)
+      prev.map(q => q.id === questionId ? { ...q, question_media: mediaUrl } : q)
     );
   };
 
   // Answer settings handlers
-  const handleAnswerMediaChange = (answerId: string, mediaUrl: string | null) => {
-    setAnswers(prev => 
-      prev.map(a => a.id === answerId ? { ...a, answerMedia: mediaUrl } : a)
+  const handleAnswerMediaChange = (answerId: string, mediaUrl: string | undefined) => {
+    setQuestions(prev => 
+      prev.map(q => ({
+        ...q,
+        answers: q.answers.map(a => 
+          a.id === answerId ? { ...a, answer_media: mediaUrl } : a
+        )
+      }))
     );
   };
 
-  const handleAnswerCollectionsChange = (answerId: string, collections: any[]) => {
-    setAnswers(prev => 
-      prev.map(a => a.id === answerId ? { ...a, relatedCollections: collections } : a)
+  const handleAnswerCollectionsChange = (answerId: string, collections: ShopifyCollection[]) => {
+    setQuestions(prev => 
+      prev.map(q => ({
+        ...q,
+        answers: q.answers.map(a => 
+          a.id === answerId ? { ...a, collections } : a
+        )
+      }))
     );
   };
 
-  const handleAnswerRedirectToLinkChange = (answerId: string, value: boolean) => {
-    setAnswers(prev => 
-      prev.map(a => a.id === answerId ? { ...a, redirectToLink: value } : a)
+  const handleAnswerRedirectToLinkChange = (answerId: string, url: string) => {
+    setQuestions(prev => 
+      prev.map(q => ({
+        ...q,
+        answers: q.answers.map(a => 
+          a.id === answerId ? { ...a, redirect_to_link: url } : a
+        )
+      }))
     );
   };
 
-  const handleAnswerRedirectUrlChange = (answerId: string, url: string) => {
-    setAnswers(prev => 
-      prev.map(a => a.id === answerId ? { ...a, redirectUrl: url } : a)
-    );
-  };
-
-  const handleAnswerMetafieldConditionsChange = (answerId: string, conditions: any[]) => {
-    setAnswers(prev => 
-      prev.map(a => a.id === answerId ? { ...a, metafieldConditions: conditions } : a)
+  const handleAnswerMetafieldConditionsChange = (answerId: string, conditions: AnswerCondition[]) => {
+    setQuestions(prev => 
+      prev.map(q => ({
+        ...q,
+        answers: q.answers.map(a => 
+          a.id === answerId ? { ...a, conditions } : a
+        )
+      }))
     );
   };
 
@@ -304,15 +306,15 @@ const QuizBuilder = forwardRef<any, QuizBuilderProps>((props, ref) => {
     }
   };
 
-  const loadQuizData = (quizData: any) => {
+  const loadQuizData = (quizData: Partial<Quiz>) => {
     setQuestions(quizData.questions || []);
-    setAnswers(quizData.answers || []);
-    setInternalQuizTitle(quizData.internalQuizTitle || '');
-    setInternalQuizDescription(quizData.internalQuizDescription || '');
-    setQuizImage(quizData.quizImage || null);
+    setInternalQuizTitle(quizData.internal_quiz_title || '');
+    setInternalQuizDescription(quizData.internal_quiz_description || '');
+    setQuizImage(quizData.quiz_image || null);
     setIsActive(quizData.is_active || false);
-    setAutoTransition(quizData.auto_transition || false);
-    setSelectedCollections(quizData.selected_collections || []);
+    // Note: autoTransition and selectedCollections are not in Quiz interface
+    // setAutoTransition(quizData.auto_transition || false);
+    // setSelectedCollections(quizData.selected_collections || []);
     
     // Reset to default styles if no styles provided, don't use previous styleSettings
     const defaultStyles = {
@@ -340,19 +342,18 @@ const QuizBuilder = forwardRef<any, QuizBuilderProps>((props, ref) => {
   // Expose methods to parent component
   useImperativeHandle(ref, () => ({
     getQuizData: () => ({
-      internalQuizTitle,
-      internalQuizDescription,
+      title: props.quizTitle,
+      description: undefined,
+      internalTitle: internalQuizTitle,
+      internalDescription: internalQuizDescription,
       quizImage,
       isActive,
-      autoTransition,
-      selectedCollections,
-      questions,
-      answers,
-      styles: styleSettings
+      styles: styleSettings,
+      questions
     }),
     saveQuiz: handleSaveQuiz,
     loadQuizData
-  }), [internalQuizTitle, internalQuizDescription, quizImage, isActive, autoTransition, selectedCollections, questions, answers, styleSettings]);
+  }), [internalQuizTitle, internalQuizDescription, quizImage, isActive, questions, styleSettings, props.quizTitle]);
 
   return (
     <div style={{ 
@@ -368,7 +369,6 @@ const QuizBuilder = forwardRef<any, QuizBuilderProps>((props, ref) => {
           onTabChange={handleTabChange} 
           activeTab={activeTab}
           questions={questions}
-          answers={answers}
           onQuestionAdd={handleQuestionAdd}
           onQuestionSelect={handleQuestionSelect}
           onQuestionReorder={handleQuestionReorder}
@@ -386,7 +386,6 @@ const QuizBuilder = forwardRef<any, QuizBuilderProps>((props, ref) => {
           {...props}
           activeTab={activeTab}
           questions={questions}
-          answers={answers}
           selectedQuestionId={selectedQuestionId}
           selectedAnswerId={selectedAnswerId}
           internalQuizTitle={internalQuizTitle}
@@ -405,21 +404,16 @@ const QuizBuilder = forwardRef<any, QuizBuilderProps>((props, ref) => {
           selectedQuestionId={selectedQuestionId}
           selectedAnswerId={selectedAnswerId}
           questions={questions}
-          answers={answers}
           onQuestionTextChange={handleQuestionTextChange}
           onAnswerTextChange={handleAnswerTextChange}
           quizName={props.quizTitle}
           quizTitle={internalQuizTitle}
           quizImage={quizImage}
           isActive={isActive}
-          autoTransition={autoTransition}
-          selectedCollections={selectedCollections}
           onQuizNameChange={props.onTitleChange}
           onQuizTitleChange={handleInternalQuizTitleChange}
           onQuizImageChange={handleQuizImageChange}
           onIsActiveChange={setIsActive}
-          onAutoTransitionChange={setAutoTransition}
-          onCollectionsChange={setSelectedCollections}
           internalQuizTitle={internalQuizTitle}
           internalQuizDescription={internalQuizDescription}
           onInternalQuizTitleChange={handleInternalQuizTitleChange}

@@ -1,6 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateShopAccess, createShopifyApiUrl } from '@/lib/shopify-auth';
 
+// GraphQL response interfaces
+interface MediaImageData {
+  url: string;
+  width: number;
+  height: number;
+}
+
+interface MediaImageNode {
+  id: string;
+  alt?: string;
+  image?: MediaImageData;
+}
+
+interface MediaImageEdge {
+  node: MediaImageNode;
+}
+
+interface ShopifyMediaResponse {
+  data: {
+    files: {
+      edges: MediaImageEdge[];
+    };
+  };
+  errors?: unknown[];
+}
+
 const GET_FILES_QUERY = `
   query getFiles($first: Int!) {
     files(first: $first, query: "media_type:IMAGE") {
@@ -51,7 +77,8 @@ async function fetchMediaFiles(shop: string, accessToken: string, request: NextR
     throw new Error(`GraphQL errors: ${JSON.stringify(data.errors)}`);
   }
 
-  const files = data.data.files.edges.map((edge: any) => ({
+  const responseData = data as ShopifyMediaResponse;
+  const files = responseData.data.files.edges.map((edge: MediaImageEdge) => ({
     id: edge.node.id,
     alt: edge.node.alt || '',
     url: edge.node.image?.url || '',

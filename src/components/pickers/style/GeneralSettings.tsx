@@ -1,16 +1,11 @@
 'use client';
 
 import { Text, Select, BlockStack, Checkbox } from '@shopify/polaris';
-
-interface StyleSettings {
-  fontFamily: string;
-  animations: boolean;
-  [key: string]: any;
-}
+import { StyleSettings, StyleChangeHandler } from '../../../types';
 
 interface GeneralSettingsProps {
   styles: StyleSettings;
-  onStyleChange: (key: string, value: any) => void;
+  onStyleChange: StyleChangeHandler;
 }
 
 export default function GeneralSettings({ styles, onStyleChange }: GeneralSettingsProps) {

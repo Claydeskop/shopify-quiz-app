@@ -1,6 +1,116 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getShopFromRequest } from '@/lib/shopify-auth';
+import {
+  Quiz,
+  Question,
+  Answer,
+  StyleSettings,
+  ShopifyCollection,
+  ShopifyMetafield,
+  AnswerCondition,
+  ApiResponse
+} from '@/types';
+
+// Database schema interfaces
+interface DatabaseQuiz {
+  id: string;
+  title: string;
+  quiz_type: string;
+  internal_quiz_title: string;
+  internal_quiz_description: string;
+  is_active: boolean;
+  auto_transition: boolean;
+  selected_collections: unknown[];
+  quiz_image: string | null;
+  styles: StyleSettings;
+  shop_domain: string;
+  shopify_collection_ids: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+interface DatabaseQuestion {
+  id: string;
+  quiz_id: string;
+  text: string;
+  show_answers: boolean;
+  allow_multiple_selection: boolean;
+  question_media: string | null;
+  question_order: number;
+  is_required: boolean;
+  is_skippable: boolean;
+  auto_advance: boolean;
+  styles: Record<string, unknown>;
+}
+
+interface DatabaseAnswer {
+  id: string;
+  question_id: string;
+  text: string;
+  answer_media: string | null;
+  redirect_to_link: boolean;
+  redirect_url: string | null;
+  related_products: string[];
+  related_tags: string[];
+  related_categories: string[];
+  answer_order: number;
+  is_default: boolean;
+  weight: number;
+  answer_collections?: DatabaseAnswerCollection[];
+  metafield_conditions?: DatabaseMetafieldCondition[];
+}
+
+interface DatabaseAnswerCollection {
+  shopify_collection_id: string;
+  collection_order: number;
+}
+
+interface DatabaseMetafieldCondition {
+  metafield_namespace: string;
+  metafield_key: string;
+  metafield_name: string;
+  metafield_type: string;
+  operator: string;
+  expected_value: string;
+  weight: number;
+}
+
+interface QuizUpdateRequestBody {
+  title: string;
+  quizType: string;
+  internalQuizTitle: string;
+  internalQuizDescription: string;
+  isActive: boolean;
+  autoTransition: boolean;
+  selectedCollections: ShopifyCollection[];
+  quizImage: string | null;
+  styles: StyleSettings;
+  questions: Array<{
+    id: string;
+    text: string;
+    showAnswers: boolean;
+    allowMultipleSelection: boolean;
+    questionMedia: string | null;
+  }>;
+  answers: Array<{
+    id: string;
+    text: string;
+    questionId: string;
+    answerMedia: string | null;
+    redirectToLink: boolean;
+    redirectUrl: string;
+    relatedProducts: string[];
+    relatedTags: string[];
+    relatedCategories: string[];
+    relatedCollections: ShopifyCollection[];
+    metafieldConditions: AnswerCondition[];
+  }>;
+}
+
+interface ShopifyCollectionResponse {
+  collections: ShopifyCollection[];
+}
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -88,14 +198,14 @@ export async function GET(
     const collectionIds = new Set<string>();
     answers.forEach(answer => {
       if (answer.answer_collections) {
-        answer.answer_collections.forEach((ac: any) => {
+        answer.answer_collections.forEach((ac: DatabaseAnswerCollection) => {
           collectionIds.add(ac.shopify_collection_id);
         });
       }
     });
 
     // Fetch collection details from Shopify if we have collection IDs
-    let collectionsMap: Record<string, any> = {};
+    const collectionsMap: Record<string, ShopifyCollection> = {};
     if (collectionIds.size > 0) {
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/shopify/collections`, {
@@ -104,9 +214,9 @@ export async function GET(
           }
         });
         if (response.ok) {
-          const data = await response.json();
-          const collections = data.collections || [];
-          collections.forEach((collection: any) => {
+          const responseData = await response.json() as ShopifyCollectionResponse;
+          const collections = responseData.collections || [];
+          collections.forEach((collection: ShopifyCollection) => {
             collectionsMap[collection.id] = collection;
           });
         }
@@ -131,28 +241,28 @@ export async function GET(
       answerMedia: a.answer_media,
       redirectToLink: a.redirect_to_link,
       redirectUrl: a.redirect_url || '',
-      relatedCollections: a.answer_collections?.map((ac: any) => {
+      relatedCollections: a.answer_collections?.map((ac: DatabaseAnswerCollection) => {
         const collection = collectionsMap[ac.shopify_collection_id];
         return {
           id: ac.shopify_collection_id,
           title: collection?.title || 'Unknown Collection',
           handle: collection?.handle || '',
-          productsCount: collection?.productsCount || 0
+          description: collection?.description
         };
       }) || [],
       relatedProducts: a.related_products || [],
       relatedTags: a.related_tags || [],
       relatedCategories: a.related_categories || [],
-      metafieldConditions: a.metafield_conditions?.map((mc: any) => ({
-        id: `${mc.metafield_namespace}-${mc.metafield_key}`,
+      metafieldConditions: a.metafield_conditions?.map((mc: DatabaseMetafieldCondition): AnswerCondition => ({
         metafield: {
           id: `${mc.metafield_namespace}-${mc.metafield_key}`,
           key: mc.metafield_key,
           namespace: mc.metafield_namespace,
-          name: mc.metafield_name,
-          type: mc.metafield_type
+          value: mc.expected_value,
+          type: mc.metafield_type,
+          description: mc.metafield_name
         },
-        operator: mc.operator,
+        operator: mc.operator as 'equals' | 'not_equals',
         value: mc.expected_value
       })) || []
     }));
@@ -214,7 +324,7 @@ export async function PUT(
       );
     }
 
-    const body = await request.json();
+    const body = await request.json() as QuizUpdateRequestBody;
     const { id: quizId } = await params;
 
     // Verify quiz ownership
@@ -244,7 +354,7 @@ export async function PUT(
         auto_transition: body.autoTransition,
         selected_collections: body.selectedCollections || [],
         quiz_image: body.quizImage,
-        shopify_collection_ids: body.selectedCollections?.map((c: any) => c.id) || [],
+        shopify_collection_ids: body.selectedCollections?.map((c: ShopifyCollection) => c.id) || [],
         styles: body.styles || {
           backgroundColor: '#2c5aa0',
           optionBackgroundColor: '#ffffff',
@@ -278,7 +388,7 @@ export async function PUT(
     await supabase.from('questions').delete().eq('quiz_id', quizId);
 
     // Save new questions
-    const questionsToInsert = body.questions.map((question: any, index: number) => ({
+    const questionsToInsert = body.questions.map((question, index: number) => ({
       quiz_id: quizId,
       text: question.text,
       show_answers: question.showAnswers,
@@ -306,12 +416,12 @@ export async function PUT(
 
     // Create question ID mapping
     const questionIdMap: Record<string, string> = {};
-    body.questions.forEach((frontendQuestion: any, index: number) => {
+    body.questions.forEach((frontendQuestion, index: number) => {
       questionIdMap[frontendQuestion.id] = savedQuestions[index].id;
     });
 
     // Save new answers
-    const answersToInsert = body.answers.map((answer: any, index: number) => ({
+    const answersToInsert = body.answers.map((answer, index: number) => ({
       question_id: questionIdMap[answer.questionId],
       text: answer.text,
       answer_media: answer.answerMedia,
@@ -340,22 +450,31 @@ export async function PUT(
 
     // Handle metafield conditions and collections (similar to save route)
     const answerIdMap: Record<string, string> = {};
-    body.answers.forEach((frontendAnswer: any, index: number) => {
+    body.answers.forEach((frontendAnswer, index: number) => {
       answerIdMap[frontendAnswer.id] = savedAnswers[index].id;
     });
 
     // Save metafield conditions
-    const metafieldConditionsToInsert: any[] = [];
-    body.answers.forEach((answer: any) => {
+    const metafieldConditionsToInsert: Array<{
+      answer_id: string;
+      metafield_namespace: string;
+      metafield_key: string;
+      metafield_name: string;
+      metafield_type: string;
+      operator: string;
+      expected_value: string;
+      weight: number;
+    }> = [];
+    body.answers.forEach((answer) => {
       if (answer.metafieldConditions && answer.metafieldConditions.length > 0) {
-        answer.metafieldConditions.forEach((condition: any) => {
+        answer.metafieldConditions.forEach((condition) => {
           if (condition.metafield && condition.value) {
             metafieldConditionsToInsert.push({
               answer_id: answerIdMap[answer.id],
-              metafield_namespace: condition.metafield.namespace,
-              metafield_key: condition.metafield.key,
-              metafield_name: condition.metafield.name,
-              metafield_type: condition.metafield.type,
+              metafield_namespace: condition.metafield!.namespace,
+              metafield_key: condition.metafield!.key,
+              metafield_name: condition.metafield!.description || condition.metafield!.key,
+              metafield_type: condition.metafield!.type,
               operator: condition.operator,
               expected_value: condition.value,
               weight: 1
@@ -370,10 +489,14 @@ export async function PUT(
     }
 
     // Save answer-collection relationships
-    const answerCollectionsToInsert: any[] = [];
-    body.answers.forEach((answer: any) => {
+    const answerCollectionsToInsert: Array<{
+      answer_id: string;
+      shopify_collection_id: string;
+      collection_order: number;
+    }> = [];
+    body.answers.forEach((answer) => {
       if (answer.relatedCollections && answer.relatedCollections.length > 0) {
-        answer.relatedCollections.forEach((collection: any, index: number) => {
+        answer.relatedCollections.forEach((collection, index: number) => {
           if (collection.id) {
             answerCollectionsToInsert.push({
               answer_id: answerIdMap[answer.id],

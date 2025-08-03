@@ -1,6 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getShopifyAccessToken } from '@/lib/shopify-auth';
 
+// GraphQL response interfaces
+interface ProductTagsNode {
+  tags: string[];
+}
+
+interface ProductTagsEdge {
+  node: ProductTagsNode;
+}
+
+interface ProductTagsResponse {
+  data: {
+    products: {
+      edges: ProductTagsEdge[];
+    };
+  };
+  errors?: unknown[];
+}
+
 export async function GET(request: NextRequest) {
   try {
     const shopDomain = request.headers.get('x-shopify-shop-domain');
@@ -69,7 +87,8 @@ export async function GET(request: NextRequest) {
     // Extract unique tags from all products
     const allTags = new Set<string>();
     
-    data.data.products.edges.forEach((edge: any) => {
+    const responseData = data as ProductTagsResponse;
+    responseData.data.products.edges.forEach((edge: ProductTagsEdge) => {
       edge.node.tags.forEach((tag: string) => {
         if (tag.trim()) {
           allTags.add(tag.trim());

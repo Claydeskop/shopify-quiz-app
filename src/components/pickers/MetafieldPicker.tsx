@@ -11,6 +11,7 @@ import {
 } from '@shopify/polaris';
 import { useState, useCallback, useEffect } from 'react';
 import { DeleteIcon } from '@shopify/polaris-icons';
+import { ShopifyMetafield } from '../../types';
 
 interface Metafield {
   id: string;
@@ -20,7 +21,7 @@ interface Metafield {
   description?: string;
   type: string;
   ownerType: string;
-  validations: any[];
+  validations: ShopifyMetafield[];
 }
 
 interface MetafieldCondition {

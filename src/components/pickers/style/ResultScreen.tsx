@@ -1,19 +1,11 @@
 'use client';
 
 import { Text, TextField, BlockStack, Card } from '@shopify/polaris';
-
-interface StyleSettings {
-  // Sonuç Ekranı
-  resultBackgroundColor: string;
-  resultTextColor: string;
-  resultButtonColor: string;
-  resultButtonTextColor: string;
-  [key: string]: any;
-}
+import { StyleSettings, StyleChangeHandler } from '../../../types';
 
 interface ResultScreenProps {
   styles: StyleSettings;
-  onStyleChange: (key: string, value: any) => void;
+  onStyleChange: StyleChangeHandler;
 }
 
 const ColorInput = ({ label, value, onChange }: { label: string, value: string, onChange: (value: string) => void }) => (

@@ -1,37 +1,11 @@
 'use client';
 
 import { Text, TextField, RangeSlider, Select, BlockStack, Card, Divider } from '@shopify/polaris';
-
-interface StyleSettings {
-  // Giriş Ekranı - Renkler
-  introBackgroundColor: string;
-  introStartButtonColor: string;
-  introStartButtonTextColor: string;
-  introQuestionTextColor: string;
-  introDescriptionTextColor: string;
-  introStartButtonBorderColor: string;
-  introImageBorderColor: string;
-
-  // Giriş Ekranı - Borderlar
-  introButtonBorderWidth: number;
-  introButtonBorderRadius: number;
-  introButtonBorderType: string;
-  introImageBorderWidth: number;
-  introImageBorderRadius: number;
-  introImageBorderType: string;
-
-  // Giriş Ekranı - Text
-  introTitleSize: number;
-  introDescriptionSize: number;
-  introButtonTextSize: number;
-  introIconSize: number;
-  introImageHeight: number;
-  [key: string]: any;
-}
+import { StyleSettings, StyleChangeHandler } from '../../../types';
 
 interface IntroScreenSettingsProps {
   styles: StyleSettings;
-  onStyleChange: (key: string, value: any) => void;
+  onStyleChange: StyleChangeHandler;
 }
 
 const ColorInput = ({ label, value, onChange }: { label: string, value: string, onChange: (value: string) => void }) => (

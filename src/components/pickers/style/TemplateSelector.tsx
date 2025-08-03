@@ -1,13 +1,10 @@
 'use client';
 
 import { Text, Button, BlockStack, Card } from '@shopify/polaris';
-
-interface TemplateStyles {
-  [key: string]: any;
-}
+import { StyleSettings } from '../../../types';
 
 interface TemplateSelectorProps {
-  onTemplateSelect: (templateStyles: TemplateStyles) => void;
+  onTemplateSelect: (templateStyles: Partial<StyleSettings>) => void;
 }
 
 const templates = {

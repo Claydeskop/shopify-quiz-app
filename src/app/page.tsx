@@ -15,6 +15,13 @@ import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import QuizBuilder from '../components/QuizBuilder';
 import QuizList from '../components/QuizList';
+import type { Quiz, QuizFormData } from '@/types';
+
+interface QuizBuilderRef {
+  getQuizData: () => QuizFormData;
+  saveQuiz: () => Promise<void>;
+  loadQuizData: (quizData: Partial<Quiz>) => void;
+}
 
 function AppContent() {
   const shopify = useAppBridge();
@@ -26,7 +33,7 @@ function AppContent() {
   const [isEditing, setIsEditing] = useState(false);
   const [deletingQuizId, setDeletingQuizId] = useState<string | null>(null);
   const [isDeletingQuiz, setIsDeletingQuiz] = useState(false);
-  const quizBuilderRef = useRef<any>(null);
+  const quizBuilderRef = useRef<QuizBuilderRef>(null);
   
   const handleCreateQuiz = () => {
     setIsEditing(false);

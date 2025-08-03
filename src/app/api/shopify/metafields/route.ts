@@ -1,6 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateShopAccess, createShopifyApiUrl } from '@/lib/shopify-auth';
 
+// GraphQL response interfaces
+interface MetafieldValidation {
+  name: string;
+  value: string;
+}
+
+interface ShopifyMetafieldNode {
+  id: string;
+  key: string;
+  namespace: string;
+  name: string;
+  description: string;
+  type: {
+    name: string;
+  };
+  ownerType: string;
+  validations: MetafieldValidation[];
+}
+
+interface ShopifyMetafieldEdge {
+  node: ShopifyMetafieldNode;
+}
+
+interface ShopifyMetafieldsResponse {
+  data: {
+    metafieldDefinitions: {
+      edges: ShopifyMetafieldEdge[];
+    };
+  };
+  errors?: unknown[];
+}
+
 const GET_METAFIELDS_QUERY = `
   query getMetafields($first: Int!, $ownerType: MetafieldOwnerType!, $namespace: String) {
     metafieldDefinitions(first: $first, ownerType: $ownerType, namespace: $namespace) {
@@ -59,7 +91,8 @@ async function fetchMetafields(shop: string, accessToken: string, request: NextR
     throw new Error(`GraphQL errors: ${JSON.stringify(data.errors)}`);
   }
 
-  const metafields = data.data.metafieldDefinitions.edges.map((edge: any) => ({
+  const responseData = data as ShopifyMetafieldsResponse;
+  const metafields = responseData.data.metafieldDefinitions.edges.map((edge: ShopifyMetafieldEdge) => ({
     id: edge.node.id.replace('gid://shopify/MetafieldDefinition/', ''),
     key: edge.node.key,
     namespace: edge.node.namespace,
