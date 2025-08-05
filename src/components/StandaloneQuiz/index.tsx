@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShopifyCollection, StyleSettings } from '../../types';
+import Image from 'next/image';
+import { ShopifyCollection, StyleSettings as MainStyleSettings } from '../../types';
 
 interface Question {
   id: string;
@@ -287,13 +288,13 @@ export default function StandaloneQuiz({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            position: 'relative',
           }}>
-            <img
+            <Image
               src={quiz.image}
               alt="Quiz image"
+              fill
               style={{
-                width: '100%',
-                height: '100%',
                 objectFit: 'cover',
               }}
             />
@@ -455,9 +456,11 @@ export default function StandaloneQuiz({
               boxShadow: '0 15px 35px rgba(0,0,0,0.1)',
               maxWidth: '300px'
             }}>
-              <img
+              <Image
                 src={currentQuestion.questionMedia}
                 alt="Question image"
+                width={300}
+                height={200}
                 style={{
                   width: '100%',
                   height: 'auto',
@@ -584,14 +587,14 @@ export default function StandaloneQuiz({
                     overflow: 'hidden',
                     border: '1px solid rgba(255,255,255,0.2)',
                     background: 'rgba(255,255,255,0.1)',
-                    marginBottom: '4px'
+                    marginBottom: '4px',
+                    position: 'relative'
                   }}>
-                    <img
+                    <Image
                       src={answer.answerMedia}
                       alt="Answer image"
+                      fill
                       style={{
-                        width: '100%',
-                        height: '100%',
                         objectFit: 'cover'
                       }}
                     />

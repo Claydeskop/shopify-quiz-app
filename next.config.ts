@@ -3,6 +3,10 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   transpilePackages: ['@shopify/polaris', '@shopify/app-bridge', '@shopify/app-bridge-react'],
   
+  images: {
+    domains: ['cdn.shopify.com'],
+  },
+  
   async headers() {
     return [
       {

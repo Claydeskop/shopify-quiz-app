@@ -4,21 +4,10 @@ import { Button, Text } from '@shopify/polaris';
 import { DragHandleIcon, PlusIcon } from '@shopify/polaris-icons';
 import { useState } from 'react';
 import AnswerBuilder from './AnswerBuilder';
-
-interface Question {
-  id: string;
-  text: string;
-}
-
-interface Answer {
-  id: string;
-  text: string;
-  questionId: string;
-}
+import { Question, Answer } from '../../types';
 
 interface QuestionBuilderProps {
   questions: Question[];
-  answers: Answer[];
   onQuestionAdd: () => void;
   onQuestionSelect: (questionId: string) => void;
   onQuestionReorder: (dragIndex: number, hoverIndex: number) => void;
@@ -31,7 +20,6 @@ interface QuestionBuilderProps {
 
 export default function QuestionBuilder({ 
   questions,
-  answers,
   onQuestionAdd, 
   onQuestionSelect,
   onQuestionReorder,
@@ -91,7 +79,7 @@ export default function QuestionBuilder({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-      {questions.map((question, index) => (
+      {(questions || []).map((question, index) => (
         <div key={question.id}>
           {/* Drop Zone Indicator */}
           {dragOverIndex === index && draggedIndex !== null && draggedIndex !== index && (
@@ -166,7 +154,10 @@ export default function QuestionBuilder({
           }}>
             {selectedQuestionId === question.id && (
               <AnswerBuilder
-                answers={answers}
+                answers={(question.answers || []).map(answer => ({
+                  ...answer,
+                  questionId: question.id
+                } as Answer & { questionId: string }))}
                 questionId={question.id}
                 onAnswerAdd={onAnswerAdd}
                 onAnswerSelect={onAnswerSelect}

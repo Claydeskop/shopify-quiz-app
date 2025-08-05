@@ -1,18 +1,18 @@
 'use client';
 
 import {
-  Box,
-  Button,
-  Text,
-  Thumbnail,
-  Spinner,
-  Banner,
-  Card,
   AppProvider,
   Badge,
-  TextField
+  Banner,
+  Box,
+  Button,
+  Card,
+  Spinner,
+  Text,
+  TextField,
+  Thumbnail
 } from '@shopify/polaris';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface Product {
   id: string;
@@ -143,7 +143,7 @@ export default function ProductPickerModal() {
             </Text>
             <Box paddingBlockStart="200">
               <TextField
-                label=""
+                label="Search Products"
                 value={searchTerm}
                 onChange={setSearchTerm}
                 placeholder="Search products..."
@@ -225,7 +225,7 @@ export default function ProductPickerModal() {
                                 </Badge>
                                 {product.price && (
                                   <Badge tone="info">
-                                    ${product.price}
+                                    {`$${product.price}`}
                                   </Badge>
                                 )}
                               </div>
@@ -248,7 +248,7 @@ export default function ProductPickerModal() {
             justifyContent: 'space-between',
             alignItems: 'center'
           }}>
-            <Text variant="bodyMd" tone="subdued">
+            <Text variant="bodyMd" tone="subdued" as="p">
               {selectedProducts.length} product{selectedProducts.length !== 1 ? 's' : ''} selected
             </Text>
             <div style={{ display: 'flex', gap: '12px' }}>
@@ -260,7 +260,7 @@ export default function ProductPickerModal() {
                 onClick={handleConfirmSelection}
                 disabled={selectedProducts.length === 0}
               >
-                Select Products ({selectedProducts.length})
+                Select Products ({selectedProducts.length.toString()})
               </Button>
             </div>
           </div>

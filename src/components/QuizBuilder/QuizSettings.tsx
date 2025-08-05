@@ -33,10 +33,12 @@ interface QuizSettingsProps {
   onInternalQuizDescriptionChange: (value: string) => void;
   onQuestionShowAnswersChange: (questionId: string, value: boolean) => void;
   onQuestionAllowMultipleSelectionChange: (questionId: string, value: boolean) => void;
+  onQuestionShowAnswerImagesChange: (questionId: string, value: boolean) => void;
   onQuestionMediaChange: (questionId: string, mediaUrl: string | null) => void;
   onAnswerMediaChange: (answerId: string, mediaUrl: string | null) => void;
   onAnswerCollectionsChange: (answerId: string, collections: ShopifyCollection[]) => void;
-  onAnswerRedirectToLinkChange: (answerId: string, url: string) => void;
+  onAnswerRedirectToLinkChange: (answerId: string, value: boolean) => void;
+  onAnswerRedirectUrlChange: (answerId: string, url: string) => void;
   onAnswerMetafieldConditionsChange: (answerId: string, conditions: AnswerCondition[]) => void;
   styleSettings?: StyleSettingsType;
   onStyleChange?: (styles: StyleSettingsType) => void;
@@ -47,27 +49,23 @@ export default function QuizSettings({
   selectedQuestionId,
   selectedAnswerId,
   questions,
-  answers,
   onQuestionTextChange,
   onAnswerTextChange,
   quizName,
   quizTitle,
   quizImage,
   isActive,
-  autoTransition,
-  selectedCollections,
   onQuizNameChange,
   onQuizTitleChange,
   onQuizImageChange,
   onIsActiveChange,
-  onAutoTransitionChange,
-  onCollectionsChange,
   internalQuizTitle,
   internalQuizDescription,
   onInternalQuizTitleChange,
   onInternalQuizDescriptionChange,
   onQuestionShowAnswersChange,
   onQuestionAllowMultipleSelectionChange,
+  onQuestionShowAnswerImagesChange,
   onQuestionMediaChange,
   onAnswerMediaChange,
   onAnswerCollectionsChange,
@@ -77,6 +75,23 @@ export default function QuizSettings({
   styleSettings,
   onStyleChange
 }: QuizSettingsProps) {
+  
+  // Create a flat answers array from nested structure
+  const allAnswers: (Answer & { questionId: string })[] = (questions || []).flatMap(question => 
+    (question.answers || []).map(answer => ({
+      id: answer.id,
+      text: answer.text,
+      answer_media: answer.answer_media ?? null,
+      redirect_to_link: answer.redirect_to_link ?? false,
+      redirect_url: answer.redirect_url ?? null,
+      collections: answer.collections || [],
+      categories: answer.categories || [],
+      products: answer.products || [],
+      tags: answer.tags || [],
+      conditions: answer.conditions || [],
+      questionId: question.id
+    }))
+  );
 
   const renderContent = () => {
     switch (activeTab) {
@@ -105,11 +120,12 @@ export default function QuizSettings({
           return (
             <AnswerSettings
               selectedAnswerId={selectedAnswerId}
-              questions={questions}
+              answers={allAnswers}
               onAnswerTextChange={onAnswerTextChange}
               onAnswerMediaChange={onAnswerMediaChange}
               onAnswerCollectionsChange={onAnswerCollectionsChange}
               onAnswerRedirectToLinkChange={onAnswerRedirectToLinkChange}
+              onAnswerRedirectUrlChange={onAnswerRedirectUrlChange}
               onAnswerMetafieldConditionsChange={onAnswerMetafieldConditionsChange}
             />
           );
@@ -122,6 +138,7 @@ export default function QuizSettings({
             onQuestionTextChange={onQuestionTextChange}
             onQuestionShowAnswersChange={onQuestionShowAnswersChange}
             onQuestionAllowMultipleSelectionChange={onQuestionAllowMultipleSelectionChange}
+            onQuestionShowAnswerImagesChange={onQuestionShowAnswerImagesChange}
             onQuestionMediaChange={onQuestionMediaChange}
           />
         );

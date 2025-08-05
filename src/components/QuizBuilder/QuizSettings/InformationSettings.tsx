@@ -14,15 +14,11 @@ interface InformationSettingsProps {
   quizDescription: string;
   quizImage: string | null;
   isActive: boolean;
-  autoTransition: boolean;
-  selectedCollections: ShopifyCollection[];
   onQuizNameChange: (value: string) => void;
   onQuizTitleChange: (value: string) => void;
   onQuizDescriptionChange: (value: string) => void;
   onQuizImageChange: (imageUrl: string | null) => void;
   onIsActiveChange: (value: boolean) => void;
-  onAutoTransitionChange: (value: boolean) => void;
-  onCollectionsChange: (collections: ShopifyCollection[]) => void;
 }
 
 export default function InformationSettings({ 
@@ -31,15 +27,11 @@ export default function InformationSettings({
   quizDescription,
   quizImage,
   isActive,
-  autoTransition,
-  selectedCollections,
   onQuizNameChange,
   onQuizTitleChange,
   onQuizDescriptionChange,
   onQuizImageChange,
-  onIsActiveChange,
-  onAutoTransitionChange,
-  onCollectionsChange
+  onIsActiveChange
 }: InformationSettingsProps) {
 
   const handleMediaSelect = (mediaUrl: string) => {
@@ -50,9 +42,6 @@ export default function InformationSettings({
     onQuizImageChange(null);
   };
 
-  const handleCollectionsChange = (collections: ShopifyCollection[]) => {
-    onCollectionsChange(collections);
-  };
 
   return (
     <Box>
@@ -100,7 +89,7 @@ export default function InformationSettings({
       </Box>
 
       <Box paddingBlockStart="400" paddingBlockEnd="400">
-        <Text variant='bodyMd' fontWeight="medium">Quiz Image</Text>
+        <Text variant='bodyMd' fontWeight="medium" as="h4">Quiz Image</Text>
         <Box paddingBlockStart="200">
           <MediaPicker
             selectedMedia={quizImage}
@@ -110,17 +99,6 @@ export default function InformationSettings({
         </Box>
       </Box>
 
-      <CollectionPicker
-        selectedCollections={selectedCollections}
-        onCollectionsChange={handleCollectionsChange}
-      />
-
-      <CheckboxPicker
-        label="Otomatik Geçiş"
-        checked={autoTransition}
-        onChange={onAutoTransitionChange}
-        helpText="Kullanıcılar cevap seçtikten sonra otomatik olarak bir sonraki soruya geçsin"
-      />
     </Box>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
-import { Text, TextField, BlockStack, Card } from '@shopify/polaris';
-import { StyleSettings, StyleChangeHandler } from '../../../types';
+import { BlockStack, Box, Card, Text, TextField } from '@shopify/polaris';
+import { StyleChangeHandler, StyleSettings } from '../../../types';
 
 interface ResultScreenProps {
   styles: StyleSettings;
@@ -10,13 +10,16 @@ interface ResultScreenProps {
 
 const ColorInput = ({ label, value, onChange }: { label: string, value: string, onChange: (value: string) => void }) => (
   <div style={{ marginBottom: '16px' }}>
-    <Text variant='bodyMd' as='p' style={{ marginBottom: '8px' }}>{label}</Text>
+    <Box paddingBlockEnd='200'>
+      <Text variant='bodyMd' as='p'>{label}</Text>
+    </Box>
     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
       <TextField
         value={value}
         onChange={onChange}
         placeholder="#ffffff"
         autoComplete="off"
+        label="Color"
       />
       <div 
         style={{ 
@@ -76,10 +79,10 @@ export default function ResultScreen({ styles, onStyleChange }: ResultScreenProp
       {/* Bilgilendirme */}
       <Card>
         <BlockStack gap="200">
-          <Text variant='bodySm' color='subdued'>
+          <Text as='p' variant='bodySm' tone='subdued'>
             💡 <strong>Not:</strong> Sonuç ekranı ayarları quiz tamamlandığında gösterilen sonuç sayfasını etkiler.
           </Text>
-          <Text variant='bodySm' color='subdued'>
+          <Text as='p' variant='bodySm' tone='subdued'>
             Bu alanda kullanıcıya quiz sonuçları, önerilen ürünler ve tekrar quiz alma seçenekleri gösterilir.
           </Text>
         </BlockStack>

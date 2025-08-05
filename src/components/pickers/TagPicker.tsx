@@ -111,7 +111,7 @@ export default function TagPicker({ selectedTags, onTagsChange }: TagPickerProps
       <Box>
         <Text variant='headingSm' as='h4'>Tag Filters</Text>
         <Box paddingBlockStart='200'>
-          <Text variant='bodyMd' tone='critical'>
+          <Text variant='bodyMd' tone='critical' as='p'>
             {error}
           </Text>
         </Box>
@@ -146,7 +146,7 @@ export default function TagPicker({ selectedTags, onTagsChange }: TagPickerProps
                 
                 {/* Tag Selector */}
                 <Select
-                  label=""
+                  label="Tag Seç"
                   options={tagOptions}
                   onChange={(value) => updateTag(index, value)}
                   value={tag}
@@ -166,7 +166,7 @@ export default function TagPicker({ selectedTags, onTagsChange }: TagPickerProps
               {/* Tag Summary */}
               {tag && (
                 <Box paddingBlockStart='200'>
-                  <Text variant='bodySm' tone='subdued'>
+                  <Text variant='bodySm' tone='subdued' as='p'>
                     Find products with tag: <strong>&quot;{tag}&quot;</strong>
                   </Text>
                 </Box>
@@ -184,7 +184,7 @@ export default function TagPicker({ selectedTags, onTagsChange }: TagPickerProps
 
         {selectedTags.length > 0 && (
           <Box paddingBlockStart='200'>
-            <Text variant='bodySm' tone='subdued'>
+            <Text variant='bodySm' tone='subdued' as='p'>
               {selectedTags.filter(tag => tag.trim()).length} tag filter{selectedTags.filter(tag => tag.trim()).length !== 1 ? 's' : ''} defined. Products must have ALL tags.
             </Text>
           </Box>
@@ -192,7 +192,7 @@ export default function TagPicker({ selectedTags, onTagsChange }: TagPickerProps
 
         {allTags.length === 0 && !loading && (
           <Box paddingBlockStart='200'>
-            <Text variant='bodyMd' tone='subdued'>
+            <Text variant='bodyMd' tone='subdued' as='p'>
               No tags found in your store. Add tags to your products first.
             </Text>
           </Box>

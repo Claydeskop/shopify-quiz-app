@@ -1,14 +1,14 @@
 'use client';
 
-import { Text, Collapsible, Card, BlockStack, Button, Icon } from '@shopify/polaris';
-import { useState, useEffect, useRef } from 'react';
-import { CodeIcon, ChevronDownIcon, ChevronUpIcon } from '@shopify/polaris-icons';
+import { BlockStack, Card, Collapsible, Icon, Text } from '@shopify/polaris';
+import { ChevronDownIcon, ChevronUpIcon, CodeIcon } from '@shopify/polaris-icons';
+import { useEffect, useRef, useState } from 'react';
 
 import GeneralSettings from '../../pickers/style/GeneralSettings';
 import IntroScreenSettings from '../../pickers/style/IntroScreenSettings';
-import QuestionScreenSettings from '../../pickers/style/QuestionScreenSettings';
 import NavigationButtons from '../../pickers/style/NavigationButtons';
 import QuestionCounter from '../../pickers/style/QuestionCounter';
+import QuestionScreenSettings from '../../pickers/style/QuestionScreenSettings';
 import ResultScreen from '../../pickers/style/ResultScreen';
 import TemplateSelector from '../../pickers/style/TemplateSelector';
 
@@ -298,10 +298,10 @@ export default function StyleSettingsComponent({ styles, onStyleChange }: StyleS
                 transition: 'all 0.2s ease'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#e1e3e5';
+                (e.currentTarget as HTMLElement).style.backgroundColor = '#e1e3e5';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#f6f6f7';
+                (e.currentTarget as HTMLElement).style.backgroundColor = '#f6f6f7';
               }}
             >
               + {template.name}
@@ -399,7 +399,7 @@ export default function StyleSettingsComponent({ styles, onStyleChange }: StyleS
                 <Icon source={isActive ? ChevronUpIcon : ChevronDownIcon} />
               </button>
               
-              <Collapsible open={isActive}>
+              <Collapsible id={`style-section-${section.id}`} open={isActive}>
                 <div style={{ padding: '0 16px 16px 16px' }}>
                   <Component 
                     styles={styleState} 
@@ -433,7 +433,7 @@ export default function StyleSettingsComponent({ styles, onStyleChange }: StyleS
             borderRadius: '8px',
             border: '1px solid #e1e3e5'
           }}>
-            <Text variant='bodySm' color='subdued'>
+            <Text variant='bodySm' tone='subdued' as='p'>
               💡 <strong>Yardımcı CSS Sınıfları:</strong><br />
               <code>.quiz-container</code> - Ana quiz alanı<br />
               <code>.quiz-title</code> - Quiz başlığı<br />

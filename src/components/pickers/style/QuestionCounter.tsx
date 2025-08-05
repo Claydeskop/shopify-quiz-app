@@ -1,7 +1,7 @@
 'use client';
 
-import { Text, TextField, RangeSlider, Select, BlockStack, Card } from '@shopify/polaris';
-import { StyleSettings, StyleChangeHandler } from '../../../types';
+import { BlockStack, Box, Card, RangeSlider, Select, Text, TextField } from '@shopify/polaris';
+import { StyleChangeHandler, StyleSettings } from '../../../types';
 
 interface QuestionCounterProps {
   styles: StyleSettings;
@@ -10,13 +10,16 @@ interface QuestionCounterProps {
 
 const ColorInput = ({ label, value, onChange }: { label: string, value: string, onChange: (value: string) => void }) => (
   <div style={{ marginBottom: '16px' }}>
-    <Text variant='bodyMd' as='p' style={{ marginBottom: '8px' }}>{label}</Text>
+    <Box paddingBlockEnd='200'>
+      <Text variant='bodyMd' as='p'>{label}</Text>
+    </Box>
     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
       <TextField
         value={value}
         onChange={onChange}
         placeholder="#ffffff"
         autoComplete="off"
+        label="color"
       />
       <div 
         style={{ 
@@ -92,28 +95,37 @@ export default function QuestionCounter({ styles, onStyleChange }: QuestionCount
           <Text variant='headingXs' as='h6'>📐 Borderlar</Text>
           
           <div>
-            <Text variant='bodyMd' as='p' style={{ marginBottom: '8px' }}>Border Kalınlık: {styles.counterBorderWidth}px</Text>
+            <Box paddingBlockEnd='200'>
+              <Text variant='bodyMd' as='p'>Border Kalınlık: {styles.counterBorderWidth}px</Text>
+            </Box>
             <RangeSlider
               value={styles.counterBorderWidth}
               min={0}
               max={10}
-              onChange={(value) => onStyleChange('counterBorderWidth', value)}
+              onChange={(value) => onStyleChange('counterBorderWidth', Array.isArray(value) ? value[0] : value)}
+              label="Slider"
             />
           </div>
           
           <div>
-            <Text variant='bodyMd' as='p' style={{ marginBottom: '8px' }}>Border Radius: {styles.counterBorderRadius}px</Text>
+            <Box paddingBlockEnd='200'>
+              <Text variant='bodyMd' as='p'>Border Radius: {styles.counterBorderRadius}px</Text>
+            </Box>
             <RangeSlider
               value={styles.counterBorderRadius}
               min={0}
               max={50}
-              onChange={(value) => onStyleChange('counterBorderRadius', value)}
+              onChange={(value) => onStyleChange('counterBorderRadius', Array.isArray(value) ? value[0] : value)}
+              label="Slider"
             />
           </div>
           
           <div>
-            <Text variant='bodyMd' as='p' style={{ marginBottom: '8px' }}>Border Tipi</Text>
+            <Box paddingBlockEnd='200'>
+              <Text variant='bodyMd' as='p'>Border Tipi</Text>
+            </Box>
             <Select
+              label="Border Tipi"
               options={borderTypeOptions}
               value={styles.counterBorderType}
               onChange={(value) => onStyleChange('counterBorderType', value)}
@@ -128,18 +140,24 @@ export default function QuestionCounter({ styles, onStyleChange }: QuestionCount
           <Text variant='headingXs' as='h6'>📝 Metin Ayarları</Text>
           
           <div>
-            <Text variant='bodyMd' as='p' style={{ marginBottom: '8px' }}>Metin Boyutu: {styles.counterTextSize}px</Text>
+            <Box paddingBlockEnd='200'>
+              <Text variant='bodyMd' as='p'>Metin Boyutu: {styles.counterTextSize}px</Text>
+            </Box>
             <RangeSlider
               value={styles.counterTextSize}
               min={10}
               max={24}
-              onChange={(value) => onStyleChange('counterTextSize', value)}
+              onChange={(value) => onStyleChange('counterTextSize', Array.isArray(value) ? value[0] : value)}
+              label="Slider"
             />
           </div>
           
           <div>
-            <Text variant='bodyMd' as='p' style={{ marginBottom: '8px' }}>Metin Stili</Text>
+            <Box paddingBlockEnd='200'>
+              <Text variant='bodyMd' as='p'>Metin Stili</Text>
+            </Box>
             <Select
+              label="Metin Stili"
               options={textStyleOptions}
               value={styles.counterTextStyle}
               onChange={(value) => onStyleChange('counterTextStyle', value)}

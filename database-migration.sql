@@ -1,10 +1,8 @@
 -- Quiz settings güncellemeleri için veritabanı migrasyonu
 
--- 1. Slug kolonunu kaldır (eğer varsa)
-ALTER TABLE quizzes DROP COLUMN IF EXISTS slug;
-
--- 2. Yeni kolonları ekle
+-- 1. Yeni kolonları ekle
 ALTER TABLE quizzes 
+ADD COLUMN IF NOT EXISTS slug VARCHAR(50) UNIQUE,
 ADD COLUMN IF NOT EXISTS auto_transition BOOLEAN DEFAULT false,
 ADD COLUMN IF NOT EXISTS selected_collections JSONB DEFAULT '[]'::jsonb,
 ADD COLUMN IF NOT EXISTS quiz_image TEXT;

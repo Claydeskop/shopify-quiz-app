@@ -4,10 +4,11 @@ import { GET as proxyQuizGet } from '@/app/api/proxy/quiz/public/[slug]/route';
 // App proxy route handler
 export async function GET(
   request: NextRequest,
-  { params }: { params: { path: string[] } }
+  { params }: { params: Promise<{ path: string[] }> }
 ) {
   try {
-    const path = params.path || [];
+    const resolvedParams = await params;
+    const path = resolvedParams.path || [];
     
     console.log('App proxy request:', {
       path,
@@ -22,7 +23,7 @@ export async function GET(
         path[3]) {
       
       const slug = path[3];
-      return proxyQuizGet(request, { params: { slug } });
+      return proxyQuizGet(request, { params: Promise.resolve({ slug }) });
     }
 
     return NextResponse.json(
@@ -39,18 +40,18 @@ export async function GET(
   }
 }
 
-export async function POST(request: NextRequest, { params }: { params: { path: string[] } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   return GET(request, { params });
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { path: string[] } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   return GET(request, { params });
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { path: string[] } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   return GET(request, { params });
 }
 
-export async function OPTIONS(request: NextRequest, { params }: { params: { path: string[] } }) {
+export async function OPTIONS(request: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   return GET(request, { params });
 }

@@ -3,15 +3,10 @@
 import { Button, Text } from '@shopify/polaris';
 import { DragHandleIcon, PlusIcon } from '@shopify/polaris-icons';
 import { useState } from 'react';
-
-interface Answer {
-  id: string;
-  text: string;
-  questionId: string;
-}
+import { Answer } from '../../types';
 
 interface AnswerBuilderProps {
-  answers: Answer[];
+  answers: (Answer & { questionId?: string })[];
   questionId: string;
   onAnswerAdd: (questionId: string) => void;
   onAnswerSelect: (answerId: string) => void;
@@ -31,7 +26,7 @@ export default function AnswerBuilder({
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   
-  const questionAnswers = answers.filter(answer => answer.questionId === questionId);
+  const questionAnswers = answers || [];
   
   const truncateText = (text: string, maxLength: number = 24) => {
     return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;

@@ -67,8 +67,9 @@ export interface AnswerCondition {
 export interface Answer {
   id: string;
   text: string;
-  answer_media?: string;
-  redirect_to_link?: string;
+  answer_media?: string | null;
+  redirect_to_link?: boolean;
+  redirect_url?: string | null;
   collections: ShopifyCollection[];
   categories: string[];
   products: ShopifyProduct[];
@@ -79,7 +80,7 @@ export interface Answer {
 export interface Question {
   id: string;
   text: string;
-  question_media?: string;
+  question_media?: string | null;
   show_answers: boolean;
   allow_multiple_selection: boolean;
   answers: Answer[];
@@ -165,11 +166,13 @@ export interface Quiz {
   id: string;
   title: string;
   slug: string;
-  description?: string;
-  internal_quiz_title?: string;
-  internal_quiz_description?: string;
-  quiz_image?: string;
+  description?: string | null;
+  internal_quiz_title?: string | null;
+  internal_quiz_description?: string | null;
+  quiz_image?: string | null;
   is_active: boolean;
+  auto_transition: boolean;
+  selected_collections: ShopifyCollection[];
   shop_domain: string;
   styles: StyleSettings;
   questions: Question[];
@@ -179,10 +182,10 @@ export interface Quiz {
 
 export interface QuizFormData {
   title: string;
-  description?: string;
-  internalTitle?: string;
-  internalDescription?: string;
-  quizImage?: string;
+  description?: string | null;
+  internalTitle?: string | null;
+  internalDescription?: string | null;
+  quizImage?: string | null;
   isActive: boolean;
   styles: StyleSettings;
   questions: Question[];
@@ -209,6 +212,45 @@ export interface QuizListResponse extends ApiResponse {
 
 export interface QuizResponse extends ApiResponse {
   data?: Quiz;
+}
+
+// API Response interfaces for data transformation
+export interface ApiQuestion {
+  id: string;
+  text: string;
+  question_media?: string | null;
+  questionMedia?: string | null;  // camelCase version from API
+  show_answers?: boolean;
+  showAnswers?: boolean;  // camelCase version from API
+  allow_multiple_selection?: boolean;
+  allowMultipleSelection?: boolean;  // camelCase version from API
+}
+
+export interface ApiAnswer {
+  id: string;
+  text: string;
+  answer_media?: string | null;
+  answerMedia?: string | null;  // camelCase version from API
+  redirect_to_link?: boolean;
+  redirectToLink?: boolean;  // camelCase version from API
+  redirect_url?: string | null;
+  redirectUrl?: string | null;  // camelCase version from API
+  collections?: ShopifyCollection[];
+  relatedCollections?: ShopifyCollection[];  // camelCase version from API
+  categories?: string[];
+  relatedCategories?: string[];  // camelCase version from API
+  products?: ShopifyProduct[];
+  relatedProducts?: ShopifyProduct[];  // camelCase version from API
+  tags?: string[];
+  relatedTags?: string[];  // camelCase version from API
+  conditions?: AnswerCondition[];
+  metafieldConditions?: AnswerCondition[];  // camelCase version from API
+  questionId?: string;
+}
+
+export interface ApiQuiz extends Omit<Quiz, 'questions'> {
+  questions?: ApiQuestion[];
+  answers?: ApiAnswer[];
 }
 
 export interface ValidationResponse extends ApiResponse {

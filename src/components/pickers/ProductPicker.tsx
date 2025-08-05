@@ -57,7 +57,7 @@ export default function ProductPicker({ selectedProducts, onProductsChange }: Pr
   };
 
   const removeProduct = (productId: string) => {
-    onProductsChange(selectedProducts.filter(p => p.id !== productId));
+    onProductsChange((selectedProducts || []).filter(p => p.id !== productId));
   };
 
   const removeAllProducts = () => {
@@ -67,13 +67,15 @@ export default function ProductPicker({ selectedProducts, onProductsChange }: Pr
   return (
     <Box>
       {/* Selected Products Preview */}
-      {selectedProducts.length > 0 ? (
+      {(selectedProducts || []).length > 0 ? (
         <Box paddingBlockEnd='300'>
-          <Text variant='headingXs' as='h5' marginBlockEnd='200'>
-            Seçili ürünler ({selectedProducts.length})
-          </Text>
+          <Box paddingBlockEnd='200'>
+            <Text variant='headingXs' as='h5'>
+              Seçili ürünler ({(selectedProducts || []).length})
+            </Text>
+          </Box>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
-            {selectedProducts.slice(0, 3).map((product) => (
+            {(selectedProducts || []).slice(0, 3).map((product) => (
               <div key={product.id} style={{ display: 'flex', gap: '8px', alignItems: 'center', padding: '8px', backgroundColor: '#f6f6f7', borderRadius: '6px' }}>
                 {product.image ? (
                   <Thumbnail
@@ -99,7 +101,7 @@ export default function ProductPicker({ selectedProducts, onProductsChange }: Pr
                   <Text variant='bodySm' fontWeight="semibold" as='h6'>
                     {product.title}
                   </Text>
-                  <Text variant='bodyXs' tone='subdued'>
+                  <Text variant='bodyXs' tone='subdued' as='p'>
                     {product.vendor}
                   </Text>
                 </div>
@@ -112,9 +114,9 @@ export default function ProductPicker({ selectedProducts, onProductsChange }: Pr
                 </Button>
               </div>
             ))}
-            {selectedProducts.length > 3 && (
-              <Text variant='bodyXs' tone='subdued'>
-                +{selectedProducts.length - 3} more products
+            {(selectedProducts || []).length > 3 && (
+              <Text variant='bodyXs' tone='subdued' as='p'>
+                +{(selectedProducts || []).length - 3} more products
               </Text>
             )}
           </div>

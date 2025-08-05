@@ -190,7 +190,7 @@ export default function MediaPickerModal({ onMediaSelect, onCancel }: MediaPicke
         justifyContent: 'space-between',
         alignItems: 'center'
       }}>
-        <Text variant="bodySm" tone="subdued">
+        <Text variant="bodySm" tone="subdued" as="p">
           {selectedFile ? `Selected: ${selectedFile.alt || 'Untitled'}` : 'Select an image to continue'}
         </Text>
         

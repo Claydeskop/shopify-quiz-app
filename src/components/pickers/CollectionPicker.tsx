@@ -8,14 +8,10 @@ import {
   Spinner
 } from '@shopify/polaris';
 import { useState, useCallback, useEffect } from 'react';
+import { ShopifyCollection } from '../../types';
 
-interface Collection {
-  id: string;
-  title: string;
-  handle: string;
+interface Collection extends ShopifyCollection {
   productsCount: number;
-  description?: string;
-  image?: string;
 }
 
 interface CollectionPickerProps {
@@ -57,26 +53,27 @@ export default function CollectionPicker({ selectedCollections, onCollectionsCha
     }
   };
 
-  const filteredCollections = allCollections.filter((collection) =>
+  const filteredCollections = (allCollections || []).filter((collection) =>
     collection.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     collection.handle.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const availableCollections = filteredCollections.filter(
-    collection => !selectedCollections.find(sc => sc.id === collection.id)
+    collection => !(selectedCollections || []).find(sc => sc.id === collection.id)
   );
 
   const handleCollectionSelect = useCallback((collectionId: string) => {
     if (collectionId === 'placeholder' || collectionId === '') return;
     
     const collection = allCollections.find(c => c.id === collectionId);
-    if (collection && !selectedCollections.find(sc => sc.id === collection.id)) {
-      onCollectionsChange([...selectedCollections, collection]);
+    const currentSelected = selectedCollections || [];
+    if (collection && !currentSelected.find(sc => sc.id === collection.id)) {
+      onCollectionsChange([...currentSelected, collection]);
     }
   }, [selectedCollections, onCollectionsChange, allCollections]);
 
   const removeTag = useCallback((collectionId: string) => {
-    onCollectionsChange(selectedCollections.filter(c => c.id !== collectionId));
+    onCollectionsChange((selectedCollections || []).filter(c => c.id !== collectionId));
   }, [selectedCollections, onCollectionsChange]);
 
   const selectOptions = [
@@ -87,7 +84,7 @@ export default function CollectionPicker({ selectedCollections, onCollectionsCha
     }))
   ];
 
-  const selectedTagsMarkup = selectedCollections.map((collection) => (
+  const selectedTagsMarkup = (selectedCollections || []).map((collection) => (
     <Tag key={collection.id} onRemove={() => removeTag(collection.id)}>
       {collection.title} ({collection.productsCount})
     </Tag>
@@ -96,7 +93,7 @@ export default function CollectionPicker({ selectedCollections, onCollectionsCha
   if (loading) {
     return (
       <Box paddingBlockStart="400" paddingBlockEnd="400">
-        <Text variant='bodyMd' fontWeight="medium">Quiz Collection</Text>
+        <Text variant='bodyMd' fontWeight="medium" as="h4">Quiz Collection</Text>
         <Box paddingBlockStart='200'>
           <div style={{ display: 'flex', justifyContent: 'center', padding: '24px' }}>
             <Spinner size="small" />
@@ -109,9 +106,9 @@ export default function CollectionPicker({ selectedCollections, onCollectionsCha
   if (error) {
     return (
       <Box paddingBlockStart="400" paddingBlockEnd="400">
-        <Text variant='bodyMd' fontWeight="medium">Quiz Collection</Text>
+        <Text variant='bodyMd' fontWeight="medium" as="h4">Quiz Collection</Text>
         <Box paddingBlockStart='200'>
-          <Text variant='bodyMd' tone='critical'>
+          <Text variant='bodyMd' tone='critical' as='p'>
             {error}
           </Text>
         </Box>
@@ -121,10 +118,10 @@ export default function CollectionPicker({ selectedCollections, onCollectionsCha
 
   return (
     <Box paddingBlockStart="400" paddingBlockEnd="400">
-      <Text variant='bodyMd' fontWeight="medium">Quiz Collection</Text>
+      <Text variant='bodyMd' fontWeight="medium" as="h4">Quiz Collection</Text>
       <Box paddingBlockStart='200'>
         
-        {selectedCollections.length > 0 && (
+        {selectedCollections && selectedCollections.length > 0 && (
           <Box paddingBlockEnd='300'>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
               {selectedTagsMarkup}
@@ -133,7 +130,7 @@ export default function CollectionPicker({ selectedCollections, onCollectionsCha
         )}
 
         <Select
-          label=""
+          label="Koleksiyon Seç"
           options={selectOptions}
           onChange={handleCollectionSelect}
           value="placeholder"
@@ -143,7 +140,7 @@ export default function CollectionPicker({ selectedCollections, onCollectionsCha
 
         {availableCollections.length > 0 && (
           <Box paddingBlockStart='200'>
-            <Text variant='bodySm' tone='subdued'>
+            <Text variant='bodySm' tone='subdued' as='p'>
               {availableCollections.length} collection{availableCollections.length !== 1 ? 's' : ''} available
             </Text>
           </Box>
@@ -151,7 +148,7 @@ export default function CollectionPicker({ selectedCollections, onCollectionsCha
 
         {allCollections.length === 0 && !loading && !error && (
           <Box paddingBlockStart='200'>
-            <Text variant='bodyMd' tone='subdued'>
+            <Text variant='bodyMd' tone='subdued' as='p'>
               No collections found in your store.
             </Text>
           </Box>

@@ -1,6 +1,6 @@
 'use client';
 
-import { Text, Button, BlockStack, Card } from '@shopify/polaris';
+import { BlockStack, Box, Button, Card, Text } from '@shopify/polaris';
 import { StyleSettings } from '../../../types';
 
 interface TemplateSelectorProps {
@@ -380,8 +380,10 @@ export default function TemplateSelector({ onTemplateSelect }: TemplateSelectorP
           <div style={{ padding: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
               <div style={{ flex: 1 }}>
-                <Text variant='headingXs' as='h6' style={{ marginBottom: '4px' }}>{template.name}</Text>
-                <Text variant='bodySm' color='subdued'>{template.description}</Text>
+                <Box paddingBlockEnd="100">
+                  <Text variant='headingXs' as='h6'>{template.name}</Text>
+                </Box>
+                <Text variant='bodySm' tone='subdued' as='p'>{template.description}</Text>
               </div>
               
               <div style={{ display: 'flex', gap: '4px', marginLeft: '16px' }}>
@@ -413,7 +415,7 @@ export default function TemplateSelector({ onTemplateSelect }: TemplateSelectorP
       
       <Card>
         <div style={{ padding: '16px' }}>
-          <Text variant='bodySm' color='subdued'>
+          <Text variant='bodySm' tone='subdued' as='p'>
             💡 <strong>Not:</strong> Template seçtiğinizde mevcut tüm stil ayarlarınız silinecek ve seçtiğiniz template&apos;in ayarları yüklenecektir.
           </Text>
         </div>

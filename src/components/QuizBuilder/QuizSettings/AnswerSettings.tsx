@@ -1,26 +1,24 @@
 'use client';
 
-import { Box, Text, TextField, Checkbox, Divider, Select } from '@shopify/polaris';
-import { useState } from 'react';
+import { Text, TextField, Checkbox, Divider } from '@shopify/polaris';
 import MediaPicker from '../../pickers/MediaPicker';
 import CollectionPicker from '../../pickers/CollectionPicker';
 import MetafieldPicker from '../../pickers/MetafieldPicker';
-import { ShopifyCollection, AnswerCondition } from '../../../types';
+import { ShopifyCollection, AnswerCondition, Answer } from '../../../types';
 
-interface Answer {
-  id: string;
-  text: string;
-  questionId: string;
-  answerMedia: string | null;
-  relatedCollections: ShopifyCollection[];
-  redirectToLink: boolean;
-  redirectUrl: string;
-  metafieldConditions: AnswerCondition[];
+// Types for CollectionPicker compatibility
+interface CollectionWithCount extends ShopifyCollection {
+  productsCount: number;
 }
+
+// Create a simple adapter function to avoid type conflicts
+
+// Extended Answer type that includes questionId for internal use
+type AnswerWithQuestion = Answer & { questionId: string };
 
 interface AnswerSettingsProps {
   selectedAnswerId: string | null;
-  answers: Answer[];
+  answers: AnswerWithQuestion[];
   onAnswerTextChange: (answerId: string, text: string) => void;
   onAnswerMediaChange: (answerId: string, mediaUrl: string | null) => void;
   onAnswerCollectionsChange: (answerId: string, collections: ShopifyCollection[]) => void;
@@ -39,7 +37,7 @@ export default function AnswerSettings({
   onAnswerRedirectUrlChange,
   onAnswerMetafieldConditionsChange
 }: AnswerSettingsProps) {
-  const selectedAnswer = answers.find(a => a.id === selectedAnswerId);
+  const selectedAnswer = (answers || []).find(a => a.id === selectedAnswerId);
 
   const handleAnswerMediaSelect = (mediaUrl: string) => {
     if (selectedAnswer) {
@@ -53,15 +51,42 @@ export default function AnswerSettings({
     }
   };
 
-  const handleCollectionsChange = (collections: ShopifyCollection[]) => {
+  const handleCollectionsChange = (collections: CollectionWithCount[]) => {
     if (selectedAnswer) {
-      onAnswerCollectionsChange(selectedAnswer.id, collections);
+      // Convert Collection[] to ShopifyCollection[] by removing productsCount
+      const shopifyCollections: ShopifyCollection[] = collections.map(({ productsCount: _, ...rest }) => rest);
+      onAnswerCollectionsChange(selectedAnswer.id, shopifyCollections);
     }
   };
 
-  const handleMetafieldConditionsChange = (conditions: AnswerCondition[]) => {
+  const handleMetafieldConditionsChange = (conditions: unknown[]) => {
     if (selectedAnswer) {
-      onAnswerMetafieldConditionsChange(selectedAnswer.id, conditions);
+      // Convert MetafieldPicker conditions to AnswerCondition[] 
+      const answerConditions: AnswerCondition[] = (conditions as Array<{
+        id: string;
+        metafield?: {
+          id: string;
+          namespace: string;
+          key: string;
+          name: string;
+          type: string;
+          description?: string;
+        };
+        operator: 'equals' | 'not_equals';
+        value: string;
+      }>).map(({ metafield, operator, value }) => ({
+        metafield: metafield ? {
+          id: metafield.id,
+          namespace: metafield.namespace,
+          key: metafield.key,
+          value: metafield.name,
+          type: metafield.type,
+          description: metafield.description
+        } : undefined,
+        operator,
+        value
+      }));
+      onAnswerMetafieldConditionsChange(selectedAnswer.id, answerConditions);
     }
   };
 
@@ -92,7 +117,7 @@ export default function AnswerSettings({
 
       <Text variant='headingXs' as='h5'>Şık Görseli</Text>
       <MediaPicker
-        selectedMedia={selectedAnswer.answerMedia}
+        selectedMedia={selectedAnswer.answer_media ?? null}
         onMediaSelect={handleAnswerMediaSelect}
         onMediaRemove={handleRemoveAnswerMedia}
       />
@@ -100,22 +125,36 @@ export default function AnswerSettings({
       <Divider />
 
       <MetafieldPicker
-        conditions={selectedAnswer.metafieldConditions}
-        onConditionsChange={handleMetafieldConditionsChange}
+        conditions={(selectedAnswer.conditions || []).map((condition, index) => ({
+          id: `condition-${index}`, // Generate an ID since AnswerCondition doesn't have one
+          metafield: condition.metafield ? {
+            id: condition.metafield.id,
+            key: condition.metafield.key,
+            namespace: condition.metafield.namespace,
+            name: condition.metafield.value || '',
+            description: condition.metafield.description,
+            type: condition.metafield.type,
+            ownerType: 'PRODUCT',
+            validations: []
+          } : undefined,
+          operator: condition.operator,
+          value: condition.value
+        }))}
+        onConditionsChange={handleMetafieldConditionsChange as React.ComponentProps<typeof MetafieldPicker>['onConditionsChange']}
       />
 
       <Divider />
 
       <Checkbox
         label="Bu seçilirse direkt olarak linke gitsin"
-        checked={selectedAnswer.redirectToLink}
+        checked={selectedAnswer.redirect_to_link || false}
         onChange={(value) => onAnswerRedirectToLinkChange(selectedAnswer.id, value)}
       />
 
-      {selectedAnswer.redirectToLink && (
+      {(selectedAnswer.redirect_to_link || false) && (
         <TextField
           label="Yönlendirme URL'si"
-          value={selectedAnswer.redirectUrl}
+          value={selectedAnswer.redirect_url || ''}
           onChange={(value) => onAnswerRedirectUrlChange(selectedAnswer.id, value)}
           placeholder="https://example.com"
           autoComplete="off"
@@ -126,7 +165,10 @@ export default function AnswerSettings({
 
       <Text variant='headingXs' as='h5'>İlgili Koleksiyon</Text>
       <CollectionPicker
-        selectedCollections={selectedAnswer.relatedCollections}
+        selectedCollections={(selectedAnswer.collections || []).map(collection => ({
+          ...collection,
+          productsCount: 0 // Default value since we don't have this data
+        }))}
         onCollectionsChange={handleCollectionsChange}
       />
 

@@ -1,7 +1,7 @@
 'use client';
 
-import { Text, TextField, RangeSlider, Select, BlockStack, Card } from '@shopify/polaris';
-import { StyleSettings, StyleChangeHandler } from '../../../types';
+import { BlockStack, Box, Card, RangeSlider, Select, Text, TextField } from '@shopify/polaris';
+import { StyleChangeHandler, StyleSettings } from '../../../types';
 
 interface NavigationButtonsProps {
   styles: StyleSettings;
@@ -10,13 +10,16 @@ interface NavigationButtonsProps {
 
 const ColorInput = ({ label, value, onChange }: { label: string, value: string, onChange: (value: string) => void }) => (
   <div style={{ marginBottom: '16px' }}>
-    <Text variant='bodyMd' as='p' style={{ marginBottom: '8px' }}>{label}</Text>
+    <Box paddingBlockEnd='200'>
+      <Text variant='bodyMd' as='p'>{label}</Text>
+    </Box>
     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
       <TextField
         value={value}
         onChange={onChange}
         placeholder="#ffffff"
         autoComplete="off"
+        label="Color"
       />
       <div 
         style={{ 
@@ -64,12 +67,15 @@ export default function NavigationButtons({ styles, onStyleChange }: NavigationB
           <Text variant='headingXs' as='h6'>📐 Border Ayarları</Text>
           
           <div>
-            <Text variant='bodyMd' as='p' style={{ marginBottom: '8px' }}>Border Kalınlık: {styles.navButtonBorderWidth}px</Text>
+            <Box paddingBlockEnd='200'>
+              <Text variant='bodyMd' as='p'>Border Kalınlık: {styles.navButtonBorderWidth}px</Text>
+            </Box>
             <RangeSlider
               value={styles.navButtonBorderWidth}
               min={0}
               max={10}
-              onChange={(value) => onStyleChange('navButtonBorderWidth', value)}
+              onChange={(value) => onStyleChange('navButtonBorderWidth', Array.isArray(value) ? value[0] : value)}
+              label="Slider"
             />
           </div>
           
@@ -80,8 +86,11 @@ export default function NavigationButtons({ styles, onStyleChange }: NavigationB
           />
           
           <div>
-            <Text variant='bodyMd' as='p' style={{ marginBottom: '8px' }}>Border Tipi</Text>
+            <Box paddingBlockEnd='200'>
+              <Text variant='bodyMd' as='p'>Border Tipi</Text>
+            </Box>
             <Select
+              label="Border Tipi"
               options={borderTypeOptions}
               value={styles.navButtonBorderType}
               onChange={(value) => onStyleChange('navButtonBorderType', value)}
@@ -89,12 +98,15 @@ export default function NavigationButtons({ styles, onStyleChange }: NavigationB
           </div>
           
           <div>
-            <Text variant='bodyMd' as='p' style={{ marginBottom: '8px' }}>Border Radius: {styles.navButtonBorderRadius}px</Text>
+            <Box paddingBlockEnd='200'>
+              <Text variant='bodyMd' as='p'>Border Radius: {styles.navButtonBorderRadius}px</Text>
+            </Box>
             <RangeSlider
               value={styles.navButtonBorderRadius}
               min={0}
               max={50}
-              onChange={(value) => onStyleChange('navButtonBorderRadius', value)}
+              onChange={(value) => onStyleChange('navButtonBorderRadius', Array.isArray(value) ? value[0] : value)}
+              label="Slider"
             />
           </div>
         </BlockStack>
@@ -106,18 +118,24 @@ export default function NavigationButtons({ styles, onStyleChange }: NavigationB
           <Text variant='headingXs' as='h6'>📝 Metin Ayarları</Text>
           
           <div>
-            <Text variant='bodyMd' as='p' style={{ marginBottom: '8px' }}>Metin Boyutu: {styles.navButtonTextSize}px</Text>
+            <Box paddingBlockEnd='200'>
+              <Text variant='bodyMd' as='p'>Metin Boyutu: {styles.navButtonTextSize}px</Text>
+            </Box>
             <RangeSlider
               value={styles.navButtonTextSize}
               min={12}
               max={24}
-              onChange={(value) => onStyleChange('navButtonTextSize', value)}
+              onChange={(value) => onStyleChange('navButtonTextSize', Array.isArray(value) ? value[0] : value)}
+              label="Slider"
             />
           </div>
           
           <div>
-            <Text variant='bodyMd' as='p' style={{ marginBottom: '8px' }}>Metin Tipi</Text>
+            <Box paddingBlockEnd='200'>
+              <Text variant='bodyMd' as='p'>Metin Tipi</Text>
+            </Box>
             <Select
+              label="Metin Tipi"
               options={textTypeOptions}
               value={styles.navButtonTextType}
               onChange={(value) => onStyleChange('navButtonTextType', value)}

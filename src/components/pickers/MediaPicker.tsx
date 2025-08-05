@@ -8,6 +8,7 @@ import {
   Thumbnail
 } from '@shopify/polaris';
 import { useState } from 'react';
+import Image from 'next/image';
 import MediaPickerModal from './MediaPickerModal';
 
 interface MediaPickerProps {
@@ -53,18 +54,16 @@ export default function MediaPicker({ selectedMedia, onMediaSelect, onMediaRemov
                 height: '120px', 
                 borderRadius: '8px', 
                 overflow: 'hidden',
-                border: '1px solid #e1e3e5'
+                border: '1px solid #e1e3e5',
+                position: 'relative'
               }}>
-                <img 
+                <Image 
                   src={selectedMedia} 
                   alt="Selected quiz image"
+                  fill
                   style={{ 
-                    width: '100%', 
-                    height: '100%', 
-                    objectFit: 'cover',
-                    display: 'block'
+                    objectFit: 'cover'
                   }}
-                  loading="eager"
                 />
               </div>
               <ButtonGroup>

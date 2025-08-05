@@ -111,7 +111,7 @@ export default function CategoryPicker({ selectedCategories, onCategoriesChange 
       <Box>
         <Text variant='headingSm' as='h4'>Category Filters</Text>
         <Box paddingBlockStart='200'>
-          <Text variant='bodyMd' tone='critical'>
+          <Text variant='bodyMd' tone='critical' as='p'>
             {error}
           </Text>
         </Box>
@@ -146,7 +146,7 @@ export default function CategoryPicker({ selectedCategories, onCategoriesChange 
                 
                 {/* Category Selector */}
                 <Select
-                  label=""
+                  label="Kategori Seç"
                   options={categoryOptions}
                   onChange={(value) => updateCategory(index, value)}
                   value={category}
@@ -166,7 +166,7 @@ export default function CategoryPicker({ selectedCategories, onCategoriesChange 
               {/* Category Summary */}
               {category && (
                 <Box paddingBlockStart='200'>
-                  <Text variant='bodySm' tone='subdued'>
+                  <Text variant='bodySm' tone='subdued' as='p'>
                     Find products with category: <strong>&quot;{category}&quot;</strong>
                   </Text>
                 </Box>
@@ -184,7 +184,7 @@ export default function CategoryPicker({ selectedCategories, onCategoriesChange 
 
         {selectedCategories.length > 0 && (
           <Box paddingBlockStart='200'>
-            <Text variant='bodySm' tone='subdued'>
+            <Text variant='bodySm' tone='subdued' as='p'>
               {selectedCategories.filter(category => category.trim()).length} category filter{selectedCategories.filter(category => category.trim()).length !== 1 ? 's' : ''} defined. Products must match ALL categories.
             </Text>
           </Box>
@@ -192,7 +192,7 @@ export default function CategoryPicker({ selectedCategories, onCategoriesChange 
 
         {allCategories.length === 0 && !loading && (
           <Box paddingBlockStart='200'>
-            <Text variant='bodyMd' tone='subdued'>
+            <Text variant='bodyMd' tone='subdued' as='p'>
               No categories found in your store. Add product types to your products first.
             </Text>
           </Box>

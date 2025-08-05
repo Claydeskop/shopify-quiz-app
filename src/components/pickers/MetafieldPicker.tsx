@@ -82,7 +82,7 @@ export default function MetafieldPicker({ conditions, onConditionsChange }: Meta
 
   const addCondition = () => {
     const newCondition: MetafieldCondition = {
-      id: Date.now().toString(),
+      id: `condition-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       operator: 'equals',
       value: ''
     };
@@ -126,7 +126,7 @@ export default function MetafieldPicker({ conditions, onConditionsChange }: Meta
           const values = await fetchMetafieldValues(condition.metafield.key, condition.metafield.namespace);
           setMetafieldValues(prev => ({
             ...prev,
-            [condition.metafield.id]: values
+            [condition.metafield!.id]: values
           }));
         }
       });
@@ -151,7 +151,7 @@ export default function MetafieldPicker({ conditions, onConditionsChange }: Meta
       <Box>
         <Text variant='headingSm' as='h4'>Product Finder Conditions</Text>
         <Box paddingBlockStart='200'>
-          <Text variant='bodyMd' tone='critical'>
+          <Text variant='bodyMd' tone='critical' as='p'>
             {error}
           </Text>
         </Box>
@@ -199,14 +199,14 @@ export default function MetafieldPicker({ conditions, onConditionsChange }: Meta
                   return {
                     label,
                     value: value,
-                    key: `${condition.metafield.id}-${value}-${idx}`
+                    key: `${condition.metafield!.id}-${value}-${idx}`
                   };
                 })
               ]
             : [{ label: 'Select metafield first...', value: '', key: `${condition.id}-no-metafield` }];
 
           return (
-            <Card key={condition.id}>
+            <Card key={`${condition.id}-${index}`}>
               <Box padding='300'>
                 <div style={{ 
                   display: 'flex', 
@@ -216,7 +216,7 @@ export default function MetafieldPicker({ conditions, onConditionsChange }: Meta
                   
                   {/* Header with delete button */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Text variant='bodyMd' fontWeight="semibold">
+                    <Text variant='bodyMd' fontWeight="semibold" as='h5'>
                       Condition {(conditions || []).indexOf(condition) + 1}
                     </Text>
                     <Button
@@ -230,11 +230,11 @@ export default function MetafieldPicker({ conditions, onConditionsChange }: Meta
 
                   {/* Metafield Selector */}
                   <div>
-                    <Text variant='bodyXs' as='label' fontWeight="medium">Select Metafield</Text>
+                    <Text variant='bodyXs' as='span' fontWeight="medium">Select Metafield</Text>
                     <Box paddingBlockStart='100'>
                       <div style={{ overflow: 'hidden' }}>
                         <Select
-                          label=""
+                          label="Metafield Seç"
                           options={metafieldOptions}
                           onChange={(value) => handleMetafieldSelect(condition.id, value)}
                           value={condition.metafield?.id || 'placeholder'}
@@ -249,10 +249,10 @@ export default function MetafieldPicker({ conditions, onConditionsChange }: Meta
                     <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '12px' }}>
                       {/* Operator Selector */}
                       <div>
-                        <Text variant='bodyXs' as='label' fontWeight="medium">Operator</Text>
+                        <Text variant='bodyXs' as='span' fontWeight="medium">Operator</Text>
                         <Box paddingBlockStart='100'>
                           <Select
-                            label=""
+                            label="Operatör Seç"
                             options={operatorOptions}
                             onChange={(value) => updateCondition(condition.id, { operator: value as 'equals' | 'not_equals' })}
                             value={condition.operator}
@@ -262,10 +262,10 @@ export default function MetafieldPicker({ conditions, onConditionsChange }: Meta
 
                       {/* Value Selector */}
                       <div style={{ overflow: 'hidden' }}>
-                        <Text variant='bodyXs' as='label' fontWeight="medium">Value</Text>
+                        <Text variant='bodyXs' as='span' fontWeight="medium">Value</Text>
                         <Box paddingBlockStart='100'>
                           <Select
-                            label=""
+                            label="Değer Seç"
                             options={valueOptions}
                             onChange={(value) => updateCondition(condition.id, { value })}
                             value={condition.value}
@@ -281,7 +281,7 @@ export default function MetafieldPicker({ conditions, onConditionsChange }: Meta
                 {/* Condition Summary */}
                 {condition.metafield && condition.value && (
                   <Box paddingBlockStart='200'>
-                    <Text variant='bodySm' tone='subdued'>
+                    <Text variant='bodySm' tone='subdued' as='p'>
                       Find products where <strong>{condition.metafield.namespace}.{condition.metafield.key}</strong> {' '}
                       <strong>{condition.operator === 'equals' ? 'equals' : 'does not equal'}</strong> {' '}
                       <strong>&quot;{condition.value}&quot;</strong>
@@ -302,7 +302,7 @@ export default function MetafieldPicker({ conditions, onConditionsChange }: Meta
 
         {(conditions || []).length > 0 && (
           <Box paddingBlockStart='200'>
-            <Text variant='bodySm' tone='subdued'>
+            <Text variant='bodySm' tone='subdued' as='p'>
               {(conditions || []).length} condition{(conditions || []).length !== 1 ? 's' : ''} defined. Products must match ALL conditions.
             </Text>
           </Box>
@@ -310,7 +310,7 @@ export default function MetafieldPicker({ conditions, onConditionsChange }: Meta
 
         {allMetafields.length === 0 && (
           <Box paddingBlockStart='200'>
-            <Text variant='bodyMd' tone='subdued'>
+            <Text variant='bodyMd' tone='subdued' as='p'>
               No metafields found in your store. Create metafields in Shopify admin first.
             </Text>
           </Box>

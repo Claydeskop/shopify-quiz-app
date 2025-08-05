@@ -1,7 +1,7 @@
 'use client';
 
-import { Text, TextField, RangeSlider, Select, BlockStack, Card, Divider } from '@shopify/polaris';
-import { StyleSettings, StyleChangeHandler } from '../../../types';
+import { BlockStack, Box, Card, Divider, RangeSlider, Select, Text, TextField } from '@shopify/polaris';
+import { StyleChangeHandler, StyleSettings } from '../../../types';
 
 interface IntroScreenSettingsProps {
   styles: StyleSettings;
@@ -10,13 +10,16 @@ interface IntroScreenSettingsProps {
 
 const ColorInput = ({ label, value, onChange }: { label: string, value: string, onChange: (value: string) => void }) => (
   <div style={{ marginBottom: '16px' }}>
-    <Text variant='bodyMd' as='p' style={{ marginBottom: '8px' }}>{label}</Text>
+    <Box paddingBlockEnd='200'>
+      <Text variant='bodyMd' as='p'>{label}</Text>
+    </Box>
     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
       <TextField
         value={value}
         onChange={onChange}
         placeholder="#ffffff"
         autoComplete="off"
+        label="Color"
       />
       <div 
         style={{ 
@@ -106,28 +109,37 @@ export default function IntroScreenSettings({ styles, onStyleChange }: IntroScre
           <Text variant='headingXs' as='h6'>📐 Borderlar</Text>
           
           <div>
-            <Text variant='bodyMd' as='p' style={{ marginBottom: '8px' }}>Buton Border Kalınlığı: {styles.introButtonBorderWidth}px</Text>
+            <Box paddingBlockEnd='200'>
+              <Text variant='bodyMd' as='p'>Buton Border Kalınlığı: {styles.introButtonBorderWidth}px</Text>
+            </Box>
             <RangeSlider
               value={styles.introButtonBorderWidth}
               min={0}
               max={10}
-              onChange={(value) => onStyleChange('introButtonBorderWidth', value)}
+              onChange={(value) => onStyleChange('introButtonBorderWidth', Array.isArray(value) ? value[0] : value)}
+              label="Slider"
             />
           </div>
           
           <div>
-            <Text variant='bodyMd' as='p' style={{ marginBottom: '8px' }}>Buton Border Radius: {styles.introButtonBorderRadius}px</Text>
+            <Box paddingBlockEnd='200'>
+              <Text variant='bodyMd' as='p'>Buton Border Radius: {styles.introButtonBorderRadius}px</Text>
+            </Box>
             <RangeSlider
               value={styles.introButtonBorderRadius}
               min={0}
               max={50}
-              onChange={(value) => onStyleChange('introButtonBorderRadius', value)}
+              onChange={(value) => onStyleChange('introButtonBorderRadius', Array.isArray(value) ? value[0] : value)}
+              label="Slider"
             />
           </div>
           
           <div>
-            <Text variant='bodyMd' as='p' style={{ marginBottom: '8px' }}>Buton Border Tipi</Text>
+            <Box paddingBlockEnd='200'>
+              <Text variant='bodyMd' as='p'>Buton Border Tipi</Text>
+            </Box>
             <Select
+              label="Buton Border Tipi"
               options={borderTypeOptions}
               value={styles.introButtonBorderType}
               onChange={(value) => onStyleChange('introButtonBorderType', value)}
@@ -137,28 +149,37 @@ export default function IntroScreenSettings({ styles, onStyleChange }: IntroScre
           <Divider />
           
           <div>
-            <Text variant='bodyMd' as='p' style={{ marginBottom: '8px' }}>Görsel Border Kalınlık: {styles.introImageBorderWidth}px</Text>
+            <Box paddingBlockEnd='200'>
+              <Text variant='bodyMd' as='p'>Görsel Border Kalınlık: {styles.introImageBorderWidth}px</Text>
+            </Box>
             <RangeSlider
               value={styles.introImageBorderWidth}
               min={0}
               max={10}
-              onChange={(value) => onStyleChange('introImageBorderWidth', value)}
+              onChange={(value) => onStyleChange('introImageBorderWidth', Array.isArray(value) ? value[0] : value)}
+              label="Slider"
             />
           </div>
           
           <div>
-            <Text variant='bodyMd' as='p' style={{ marginBottom: '8px' }}>Görsel Border Radius: {styles.introImageBorderRadius}px</Text>
+            <Box paddingBlockEnd='200'>
+              <Text variant='bodyMd' as='p'>Görsel Border Radius: {styles.introImageBorderRadius}px</Text>
+            </Box>
             <RangeSlider
               value={styles.introImageBorderRadius}
               min={0}
               max={50}
-              onChange={(value) => onStyleChange('introImageBorderRadius', value)}
+              onChange={(value) => onStyleChange('introImageBorderRadius', Array.isArray(value) ? value[0] : value)}
+              label="Slider"
             />
           </div>
           
           <div>
-            <Text variant='bodyMd' as='p' style={{ marginBottom: '8px' }}>Görsel Border Tipi</Text>
+            <Box paddingBlockEnd='200'>
+              <Text variant='bodyMd' as='p'>Görsel Border Tipi</Text>
+            </Box>
             <Select
+              label="Görsel Border Tipi"
               options={borderTypeOptions}
               value={styles.introImageBorderType}
               onChange={(value) => onStyleChange('introImageBorderType', value)}
@@ -173,52 +194,67 @@ export default function IntroScreenSettings({ styles, onStyleChange }: IntroScre
           <Text variant='headingXs' as='h6'>📝 Text Ayarları</Text>
           
           <div>
-            <Text variant='bodyMd' as='p' style={{ marginBottom: '8px' }}>Başlık Boyutu: {styles.introTitleSize}px</Text>
+            <Box paddingBlockEnd='200'>
+              <Text variant='bodyMd' as='p'>Başlık Boyutu: {styles.introTitleSize}px</Text>
+            </Box>
             <RangeSlider
               value={styles.introTitleSize}
               min={16}
               max={64}
-              onChange={(value) => onStyleChange('introTitleSize', value)}
+              onChange={(value) => onStyleChange('introTitleSize', Array.isArray(value) ? value[0] : value)}
+              label="Slider"
             />
           </div>
           
           <div>
-            <Text variant='bodyMd' as='p' style={{ marginBottom: '8px' }}>Açıklama Boyutu: {styles.introDescriptionSize}px</Text>
+            <Box paddingBlockEnd='200'>
+              <Text variant='bodyMd' as='p'>Açıklama Boyutu: {styles.introDescriptionSize}px</Text>
+            </Box>
             <RangeSlider
               value={styles.introDescriptionSize}
               min={12}
               max={32}
-              onChange={(value) => onStyleChange('introDescriptionSize', value)}
+              onChange={(value) => onStyleChange('introDescriptionSize', Array.isArray(value) ? value[0] : value)}
+              label="Slider"
             />
           </div>
           
           <div>
-            <Text variant='bodyMd' as='p' style={{ marginBottom: '8px' }}>Buton Metin Boyutu: {styles.introButtonTextSize}px</Text>
+            <Box paddingBlockEnd='200'>
+              <Text variant='bodyMd' as='p'>Buton Metin Boyutu: {styles.introButtonTextSize}px</Text>
+            </Box>
             <RangeSlider
               value={styles.introButtonTextSize}
               min={12}
               max={28}
-              onChange={(value) => onStyleChange('introButtonTextSize', value)}
+              onChange={(value) => onStyleChange('introButtonTextSize', Array.isArray(value) ? value[0] : value)}
+              label="Slider"
             />
           </div>
           
           <div>
-            <Text variant='bodyMd' as='p' style={{ marginBottom: '8px' }}>İkon Boyutu: {styles.introIconSize}px</Text>
+            <Box paddingBlockEnd='200'>
+              <Text variant='bodyMd' as='p'>İkon Boyutu: {styles.introIconSize}px</Text>
+            </Box>
             <RangeSlider
               value={styles.introIconSize}
               min={16}
               max={48}
-              onChange={(value) => onStyleChange('introIconSize', value)}
+              onChange={(value) => onStyleChange('introIconSize', Array.isArray(value) ? value[0] : value)}
+              label="Slider"
             />
           </div>
           
           <div>
-            <Text variant='bodyMd' as='p' style={{ marginBottom: '8px' }}>Görsel Yüksekliği: {styles.introImageHeight}px</Text>
+            <Box paddingBlockEnd='200'>
+              <Text variant='bodyMd' as='p'>Görsel Yüksekliği: {styles.introImageHeight}px</Text>
+            </Box>
             <RangeSlider
               value={styles.introImageHeight}
               min={100}
               max={500}
-              onChange={(value) => onStyleChange('introImageHeight', value)}
+              onChange={(value) => onStyleChange('introImageHeight', Array.isArray(value) ? value[0] : value)}
+              label="Slider"
             />
           </div>
         </BlockStack>

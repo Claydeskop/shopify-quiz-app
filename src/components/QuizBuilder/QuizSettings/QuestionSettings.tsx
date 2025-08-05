@@ -2,14 +2,7 @@
 
 import { Checkbox, Divider, Text, TextField } from '@shopify/polaris';
 import MediaPicker from '../../pickers/MediaPicker';
-
-interface Question {
-  id: string;
-  text: string;
-  showAnswers: boolean;
-  allowMultipleSelection: boolean;
-  questionMedia: string | null;
-}
+import { Question } from '../../../types';
 
 interface QuestionSettingsProps {
   selectedQuestionId: string | null;
@@ -30,7 +23,7 @@ export default function QuestionSettings({
   onQuestionShowAnswerImagesChange,
   onQuestionMediaChange
 }: QuestionSettingsProps) {
-  const selectedQuestion = questions.find(q => q.id === selectedQuestionId);
+  const selectedQuestion = (questions || []).find(q => q.id === selectedQuestionId);
 
   const handleQuestionMediaSelect = (mediaUrl: string) => {
     if (selectedQuestion) {
@@ -72,7 +65,7 @@ export default function QuestionSettings({
 
       <Checkbox
         label="Birden fazla seçim yapılabilir mi?"
-        checked={selectedQuestion.allowMultipleSelection}
+        checked={selectedQuestion.allow_multiple_selection}
         onChange={(value) => onQuestionAllowMultipleSelectionChange(selectedQuestion.id, value)}
       />
 
@@ -81,7 +74,7 @@ export default function QuestionSettings({
 
       <Text variant='headingXs' as='h5'>Soru Görseli</Text>
       <MediaPicker
-        selectedMedia={selectedQuestion.questionMedia}
+        selectedMedia={selectedQuestion.question_media || null}
         onMediaSelect={handleQuestionMediaSelect}
         onMediaRemove={handleRemoveQuestionMedia}
       />

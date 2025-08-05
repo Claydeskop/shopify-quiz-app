@@ -1,7 +1,7 @@
 'use client';
 
-import { Text, Select, BlockStack, Checkbox } from '@shopify/polaris';
-import { StyleSettings, StyleChangeHandler } from '../../../types';
+import { BlockStack, Box, Checkbox, Select, Text } from '@shopify/polaris';
+import { StyleChangeHandler, StyleSettings } from '../../../types';
 
 interface GeneralSettingsProps {
   styles: StyleSettings;
@@ -29,15 +29,20 @@ export default function GeneralSettings({ styles, onStyleChange }: GeneralSettin
   return (
     <BlockStack gap="400">
       <div>
-        <Text variant='bodyMd' as='p' style={{ marginBottom: '8px' }}>Font Ailesi</Text>
+        <Box paddingBlockEnd='200'>
+          <Text variant='bodyMd' as='p'>Font Ailesi</Text>
+        </Box>
         <Select
+          label="Font Ailesi"
           options={fontOptions}
           value={styles.fontFamily}
           onChange={(value) => onStyleChange('fontFamily', value)}
         />
-        <Text variant='bodySm' color='subdued' style={{ fontSize: '11px', marginTop: '4px' }}>
-          Tüm quiz metinleri için kullanılacak font ailesi
-        </Text>
+        <Box paddingBlockStart='100'>
+          <Text as='p' variant='bodySm' tone='subdued'>
+            Tüm quiz metinleri için kullanılacak font ailesi
+          </Text>
+        </Box>
       </div>
 
       <div>
@@ -46,9 +51,11 @@ export default function GeneralSettings({ styles, onStyleChange }: GeneralSettin
           checked={styles.animations}
           onChange={(checked) => onStyleChange('animations', checked)}
         />
-        <Text variant='bodySm' color='subdued' style={{ fontSize: '11px', marginTop: '4px' }}>
-          Şık geçişleri, hover efektleri ve genel animasyonlar
-        </Text>
+        <Box paddingBlockStart='100'>
+          <Text as='p' variant='bodySm' tone='subdued'>
+            Şık geçişleri, hover efektleri ve genel animasyonlar
+          </Text>
+        </Box>
       </div>
     </BlockStack>
   );

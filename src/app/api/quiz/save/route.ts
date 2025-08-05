@@ -13,34 +13,69 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+// Generate unique slug
+function generateSlug(): string {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < 8; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
+async function generateUniqueSlug(): Promise<string> {
+  let attempts = 0;
+  const maxAttempts = 10;
+  
+  while (attempts < maxAttempts) {
+    const slug = generateSlug();
+    
+    // Check if slug already exists
+    const { data, error } = await supabase
+      .from('quizzes')
+      .select('id')
+      .eq('slug', slug)
+      .single();
+    
+    if (error && error.code === 'PGRST116') {
+      // No row found, slug is unique
+      return slug;
+    }
+    
+    attempts++;
+  }
+  
+  // Fallback with timestamp if all attempts fail
+  return generateSlug() + Date.now().toString().slice(-4);
+}
+
 interface QuizData {
   title: string;
   quizType: string;
-  internalQuizTitle: string;
-  internalQuizDescription: string;
+  internalTitle: string;
+  internalDescription: string;
+  quizImage: string | null;
   isActive: boolean;
-  autoTransition: boolean;
-  selectedCollections: ShopifyCollection[];
   styles?: StyleSettings;
   questions: Array<{
     id: string;
     text: string;
-    showAnswers: boolean;
-    allowMultipleSelection: boolean;
-    questionMedia: string | null;
+    show_answers: boolean;
+    allow_multiple_selection: boolean;
+    question_media: string | null;
   }>;
   answers: Array<{
     id: string;
     text: string;
     questionId: string;
-    answerMedia: string | null;
-    relatedCollections: ShopifyCollection[];
-    redirectToLink: boolean;
-    redirectUrl: string;
-    metafieldConditions: AnswerCondition[];
-    relatedProducts: ShopifyProduct[];
-    relatedTags: string[];
-    relatedCategories: string[];
+    answer_media: string | null;
+    collections: ShopifyCollection[];
+    redirect_to_link: boolean;
+    redirect_url: string;
+    conditions: AnswerCondition[];
+    products: ShopifyProduct[];
+    tags: string[];
+    categories: string[];
   }>;
 }
 
@@ -55,9 +90,13 @@ export async function POST(request: NextRequest) {
       title: body.title,
       questionsCount: body.questions?.length || 0,
       answersCount: body.answers?.length || 0,
-      autoTransition: body.autoTransition,
-      selectedCollections: body.selectedCollections?.length || 0
+      quizImage: body.quizImage,
+      internalTitle: body.internalTitle,
+      internalDescription: body.internalDescription
     });
+
+    // Generate unique slug
+    const slug = await generateUniqueSlug();
 
     // Start transaction
     const { data: quiz, error: quizError } = await supabase
@@ -65,13 +104,12 @@ export async function POST(request: NextRequest) {
       .insert({
         shop_domain: shopDomain,
         title: body.title,
+        slug: slug,
         quiz_type: body.quizType,
         is_active: body.isActive,
-        auto_transition: body.autoTransition,
-        selected_collections: body.selectedCollections || [],
-        internal_quiz_title: body.internalQuizTitle,
-        internal_quiz_description: body.internalQuizDescription,
-        shopify_collection_ids: body.selectedCollections?.map((c: ShopifyCollection) => c.id) || [],
+        internal_quiz_title: body.internalTitle,
+        internal_quiz_description: body.internalDescription,
+        quiz_image: body.quizImage,
         styles: body.styles || {
           backgroundColor: '#2c5aa0',
           optionBackgroundColor: '#ffffff',
@@ -108,9 +146,9 @@ export async function POST(request: NextRequest) {
     const questionsToInsert = body.questions.map((question, index) => ({
       quiz_id: quiz.id,
       text: question.text,
-      show_answers: question.showAnswers,
-      allow_multiple_selection: question.allowMultipleSelection,
-      question_media: question.questionMedia,
+      show_answers: question.show_answers,
+      allow_multiple_selection: question.allow_multiple_selection,
+      question_media: question.question_media,
       question_order: index + 1,
       is_required: true,
       is_skippable: false,
@@ -142,15 +180,15 @@ export async function POST(request: NextRequest) {
     });
 
     // Save answers
-    const answersToInsert = body.answers.map((answer, index) => ({
+    const answersToInsert = (body.answers || []).map((answer, index) => ({
       question_id: questionIdMap[answer.questionId],
       text: answer.text,
-      answer_media: answer.answerMedia,
-      redirect_to_link: answer.redirectToLink,
-      redirect_url: answer.redirectUrl,
-      related_products: answer.relatedProducts || [],
-      related_tags: answer.relatedTags || [],
-      related_categories: answer.relatedCategories || [],
+      answer_media: answer.answer_media,
+      redirect_to_link: answer.redirect_to_link,
+      redirect_url: answer.redirect_url,
+      related_products: answer.products || [],
+      related_tags: answer.tags || [],
+      related_categories: answer.categories || [],
       answer_order: index + 1,
       is_default: false,
       weight: 1
@@ -191,8 +229,8 @@ export async function POST(request: NextRequest) {
       weight: number;
     }> = [];
     body.answers.forEach((answer) => {
-      if (answer.metafieldConditions && answer.metafieldConditions.length > 0) {
-        answer.metafieldConditions.forEach((condition) => {
+      if (answer.conditions && answer.conditions.length > 0) {
+        answer.conditions.forEach((condition) => {
           if (condition.metafield && condition.value) {
             metafieldConditionsToInsert.push({
               answer_id: answerIdMap[answer.id],
@@ -230,8 +268,8 @@ export async function POST(request: NextRequest) {
       collection_order: number;
     }> = [];
     body.answers.forEach((answer) => {
-      if (answer.relatedCollections && answer.relatedCollections.length > 0) {
-        answer.relatedCollections.forEach((collection: ShopifyCollection, index: number) => {
+      if (answer.collections && answer.collections.length > 0) {
+        answer.collections.forEach((collection: ShopifyCollection, index: number) => {
           if (collection.id) {
             answerCollectionsToInsert.push({
               answer_id: answerIdMap[answer.id],

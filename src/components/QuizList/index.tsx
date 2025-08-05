@@ -178,7 +178,7 @@ export default function QuizList({ onEditQuiz, onDeleteQuiz }: QuizListProps) {
                           <Text variant="headingSm" as="h4">
                             {quiz.title}
                           </Text>
-                          <Badge tone={quiz.is_active ? 'success' : 'subdued'}>
+                          <Badge tone={quiz.is_active ? 'success' : undefined}>
                             {quiz.is_active ? 'Aktif' : 'Pasif'}
                           </Badge>
                         </InlineStack>
@@ -244,7 +244,7 @@ export default function QuizList({ onEditQuiz, onDeleteQuiz }: QuizListProps) {
                       )}
                       {quiz.selected_collections && quiz.selected_collections.length > 0 && (
                         <Badge tone="success">
-                          {quiz.selected_collections.length} Koleksiyon
+                          {`${quiz.selected_collections.length} Koleksiyon`}
                         </Badge>
                       )}
                     </InlineStack>

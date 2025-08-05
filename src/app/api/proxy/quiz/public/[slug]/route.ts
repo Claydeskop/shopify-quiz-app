@@ -5,6 +5,9 @@ interface AnswerData {
   id: string;
   text: string;
   answer_media: string;
+  redirect_to_link: boolean;
+  redirect_url: string;
+  related_collections: unknown[];
   collections: unknown[];
   categories: unknown[];
   products: unknown[];
@@ -22,10 +25,10 @@ interface QuestionData {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const { slug } = params;
+    const { slug } = await params;
     
     if (!slug) {
       return NextResponse.json(

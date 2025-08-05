@@ -1,34 +1,15 @@
 'use client';
 
 import {
-  Box,
-  Button,
   Card,
-  Checkbox,
   Text,
-  Thumbnail
+  Box
 } from '@shopify/polaris';
+import { AnimatePresence, motion } from 'framer-motion';
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ShopifyCollection, StyleSettings } from '../../types';
+import { Question, StyleSettings } from '../../types';
 
-interface Question {
-  id: string;
-  text: string;
-  showAnswers: boolean;
-  allowMultipleSelection: boolean;
-  questionMedia: string | null;
-}
-
-interface Answer {
-  id: string;
-  text: string;
-  questionId: string;
-  answerMedia: string | null;
-  relatedCollections: ShopifyCollection[];
-  redirectToLink: boolean;
-  redirectUrl: string;
-}
 
 interface QuizPreviewProps {
   quizTitle: string;
@@ -36,7 +17,6 @@ interface QuizPreviewProps {
   quizType: string;
   activeTab: string;
   questions: Question[];
-  answers: Answer[];
   selectedQuestionId: string | null;
   selectedAnswerId: string | null;
   internalQuizTitle: string;
@@ -55,7 +35,6 @@ export default function QuizPreview({
   quizDescription, 
   activeTab,
   questions,
-  answers,
   selectedQuestionId,
   selectedAnswerId,
   internalQuizTitle,
@@ -154,20 +133,10 @@ export default function QuizPreview({
     customCSS: ''
   };
 
-  // Backward compatibility ve yeni stil ayarlarını birleştir
+  // Merge default styles with current styles
   const currentStyles = { 
     ...defaultStyles, 
-    ...styles,
-    // Backward compatibility için eski alanları yeni alanlara map et
-    ...(styles?.backgroundColor && !styles?.introBackgroundColor && { introBackgroundColor: styles.backgroundColor }),
-    ...(styles?.backgroundColor && !styles?.questionBackgroundColor && { questionBackgroundColor: styles.backgroundColor }),
-    ...(styles?.optionBackgroundColor && !styles?.questionOptionBackgroundColor && { questionOptionBackgroundColor: styles.optionBackgroundColor }),
-    ...(styles?.titleFontSize && !styles?.introTitleSize && { introTitleSize: styles.titleFontSize }),
-    ...(styles?.questionFontSize && !styles?.questionTextSize && { questionTextSize: styles.questionFontSize }),
-    ...(styles?.optionFontSize && !styles?.questionOptionTextSize && { questionOptionTextSize: styles.optionFontSize }),
-    ...(styles?.buttonColor && !styles?.introStartButtonColor && { introStartButtonColor: styles.buttonColor }),
-    ...(styles?.quizBorderRadius && !styles?.introButtonBorderRadius && { introButtonBorderRadius: styles.quizBorderRadius }),
-    ...(styles?.optionBorderRadius && !styles?.questionOptionBorderRadius && { questionOptionBorderRadius: styles.optionBorderRadius }),
+    ...styles
   };
 
   // Update current view based on selection - Force immediate updates
@@ -191,34 +160,43 @@ export default function QuizPreview({
       setCurrentView('question');
       
       if (selectedQuestionId && selectedQuestionId !== '') {
-        const questionIndex = questions.findIndex(q => q.id === selectedQuestionId);
+        const questionIndex = (questions || []).findIndex(q => q.id === selectedQuestionId);
         if (questionIndex !== -1) {
           setCurrentQuestionIndex(questionIndex);
         }
       } else if (selectedAnswerId && selectedAnswerId !== '') {
-        const answer = answers.find(a => a.id === selectedAnswerId);
-        if (answer) {
-          const questionIndex = questions.findIndex(q => q.id === answer.questionId);
-          if (questionIndex !== -1) {
-            setCurrentQuestionIndex(questionIndex);
+        // Find the answer in all questions
+        let answer = null;
+        let questionIndex = -1;
+        
+        for (let i = 0; i < (questions || []).length; i++) {
+          const foundAnswer = questions[i].answers?.find(a => a.id === selectedAnswerId);
+          if (foundAnswer) {
+            answer = foundAnswer;
+            questionIndex = i;
+            break;
           }
+        }
+        
+        if (answer && questionIndex !== -1) {
+          setCurrentQuestionIndex(questionIndex);
         }
       }
     }
     
     // No selection and not info/style tab - default behavior
     if (!selectedQuestionId && !selectedAnswerId && activeTab !== 'information' && activeTab !== 'style') {
-      if (questions.length > 0) {
+      if ((questions || []).length > 0) {
         setCurrentView('question');
         setCurrentQuestionIndex(0);
       } else {
         setCurrentView('info');
       }
     }
-  }, [activeTab, selectedQuestionId, selectedAnswerId, questions, answers]);
+  }, [activeTab, selectedQuestionId, selectedAnswerId, questions.length]);
 
   const handleStartQuiz = () => {
-    if (questions.length > 0) {
+    if ((questions || []).length > 0) {
       setCurrentView('question');
       setCurrentQuestionIndex(0);
       setSelectedAnswers([]);
@@ -235,7 +213,7 @@ export default function QuizPreview({
       const newIndex = currentQuestionIndex - 1;
       setCurrentQuestionIndex(newIndex);
       setSelectedAnswers([]);
-      if (onQuestionSelect && questions[newIndex]) {
+      if (onQuestionSelect && questions && questions[newIndex]) {
         onQuestionSelect(questions[newIndex].id);
       }
     } else if (currentView === 'question' && currentQuestionIndex === 0) {
@@ -254,19 +232,19 @@ export default function QuizPreview({
 
   const handleNext = () => {
     if (currentView === 'info') {
-      if (questions.length > 0) {
+      if ((questions || []).length > 0) {
         setCurrentView('question');
         setCurrentQuestionIndex(0);
         setSelectedAnswers([]);
-        if (onQuestionSelect) {
+        if (onQuestionSelect && questions) {
           onQuestionSelect(questions[0].id);
         }
       }
-    } else if (currentView === 'question' && currentQuestionIndex < questions.length - 1) {
+    } else if (currentView === 'question' && currentQuestionIndex < (questions || []).length - 1) {
       const newIndex = currentQuestionIndex + 1;
       setCurrentQuestionIndex(newIndex);
       setSelectedAnswers([]);
-      if (onQuestionSelect && questions[newIndex]) {
+      if (onQuestionSelect && questions && questions[newIndex]) {
         onQuestionSelect(questions[newIndex].id);
       }
     }
@@ -280,8 +258,8 @@ export default function QuizPreview({
     }
   };
 
-  const currentQuestion = questions[currentQuestionIndex];
-  const currentQuestionAnswers = answers.filter(a => a.questionId === currentQuestion?.id);
+  const currentQuestion = questions && questions[currentQuestionIndex];
+  const currentQuestionAnswers = currentQuestion?.answers || [];
 
   const renderQuizInfo = () => (
     <motion.div
@@ -297,7 +275,7 @@ export default function QuizPreview({
         textAlign: 'center',
         padding: '40px',
         height: '70vh',
-        background: currentStyles.introBackgroundColor || currentStyles.backgroundColor || '#2c5aa0',
+        background: currentStyles.introBackgroundColor || '#2c5aa0',
         borderRadius: `${currentStyles.introButtonBorderRadius || 24}px`,
         border: currentStyles.introImageBorderWidth > 0 ? `${currentStyles.introImageBorderWidth}px ${currentStyles.introImageBorderType} ${currentStyles.introImageBorderColor}` : 'none',
         position: 'relative',
@@ -338,13 +316,13 @@ export default function QuizPreview({
               alignItems: 'center',
               justifyContent: 'center',
               backdropFilter: 'blur(10px)',
+              position: 'relative',
             }}>
-              <img
+              <Image
                 src={quizImage}
                 alt="Quiz image"
+                fill
                 style={{
-                  width: '100%',
-                  height: '100%',
                   objectFit: 'cover',
                 }}
               />
@@ -360,7 +338,7 @@ export default function QuizPreview({
         transition={{ duration: 0.6, delay: 0.3 }}
         className="quiz-title"
         style={{
-          fontSize: `${currentStyles.introTitleSize || currentStyles.titleFontSize || 32}px`,
+          fontSize: `${currentStyles.introTitleSize || 32}px`,
           fontWeight: '700',
           color: currentStyles.introQuestionTextColor || 'white',
           marginBottom: '16px',
@@ -381,7 +359,7 @@ export default function QuizPreview({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
             style={{
               fontSize: `${currentStyles.introDescriptionSize || 18}px`,
               color: currentStyles.introDescriptionTextColor || 'rgba(255,255,255,0.9)',
@@ -400,20 +378,20 @@ export default function QuizPreview({
 
       {/* Start Button */}
       <AnimatePresence>
-        {questions.length > 0 && (
+        {(questions || []).length > 0 && (
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            transition={{ duration: 0.3, delay: 0.5 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
             style={{ position: 'relative', zIndex: 2 }}
           >
             <button
               onClick={handleStartQuiz}
               style={{
-                background: `linear-gradient(135deg, ${currentStyles.introStartButtonColor || currentStyles.buttonColor || '#ff6b6b'} 0%, ${currentStyles.introStartButtonColor || currentStyles.buttonColor || '#ff6b6b'}AA 100%)`,
+                background: `linear-gradient(135deg, ${currentStyles.introStartButtonColor || '#ff6b6b'} 0%, ${currentStyles.introStartButtonColor || '#ff6b6b'}AA 100%)`,
                 border: currentStyles.introButtonBorderWidth > 0 ? `${currentStyles.introButtonBorderWidth}px ${currentStyles.introButtonBorderType} ${currentStyles.introStartButtonBorderColor}` : 'none',
                 borderRadius: `${currentStyles.introButtonBorderRadius || 50}px`,
                 padding: '16px 48px',
@@ -430,13 +408,13 @@ export default function QuizPreview({
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-2px)';
                 e.currentTarget.style.boxShadow = '0 15px 35px rgba(255, 107, 107, 0.5)';
-                const shimmer = e.currentTarget.querySelector('div:last-child');
+                const shimmer = e.currentTarget.querySelector('div:last-child') as HTMLElement;
                 if (shimmer) shimmer.style.left = '100%';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0)';
                 e.currentTarget.style.boxShadow = '0 10px 25px rgba(255, 107, 107, 0.4)';
-                const shimmer = e.currentTarget.querySelector('div:last-child');
+                const shimmer = e.currentTarget.querySelector('div:last-child') as HTMLElement;
                 if (shimmer) shimmer.style.left = '-100%';
               }}
             >
@@ -457,7 +435,7 @@ export default function QuizPreview({
 
       {/* Empty State */}
       <AnimatePresence>
-        {questions.length === 0 && (
+        {(questions || []).length === 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -507,8 +485,8 @@ export default function QuizPreview({
         transition={{ duration: 0.5, ease: "easeOut" }}
         style={{
           padding: '32px',
-          background: currentStyles.questionBackgroundColor || currentStyles.backgroundColor || '#2c5aa0',
-          borderRadius: `${currentStyles.questionOptionBorderRadius || currentStyles.quizBorderRadius || 24}px`,
+          background: currentStyles.questionBackgroundColor || '#2c5aa0',
+          borderRadius: `${currentStyles.questionOptionBorderRadius || 24}px`,
           border: currentStyles.questionImageBorderWidth > 0 ? `${currentStyles.questionImageBorderWidth}px ${currentStyles.questionImageBorderType} ${currentStyles.questionImageBorderColor}` : 'none',
           height: '70vh',
           overflow: 'auto',
@@ -529,7 +507,7 @@ export default function QuizPreview({
         }}>
           <motion.div
             initial={{ width: 0 }}
-            animate={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}
+            animate={{ width: `${((currentQuestionIndex + 1) / (questions || []).length) * 100}%` }}
             transition={{ duration: 0.5 }}
             style={{
               height: '100%',
@@ -567,14 +545,14 @@ export default function QuizPreview({
               textTransform: currentStyles.counterTextStyle === 'uppercase' ? 'uppercase' : currentStyles.counterTextStyle === 'lowercase' ? 'lowercase' : currentStyles.counterTextStyle === 'capitalize' ? 'capitalize' : 'none',
               fontStyle: currentStyles.counterTextStyle === 'italic' ? 'italic' : 'normal'
             }}>
-              Soru {currentQuestionIndex + 1} / {questions.length}
+              Soru {currentQuestionIndex + 1} / {(questions || []).length}
             </span>
           </div>
         </motion.div>
 
         {/* Question Image */}
         <AnimatePresence>
-          {currentQuestion.questionMedia && (
+          {currentQuestion.question_media && (
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -593,9 +571,11 @@ export default function QuizPreview({
                 boxShadow: '0 15px 35px rgba(0,0,0,0.1)',
                 maxWidth: '300px'
               }}>
-                <img
-                  src={currentQuestion.questionMedia}
+                <Image
+                  src={currentQuestion.question_media}
                   alt="Question image"
+                  width={300}
+                  height={200}
                   style={{
                     width: '100%',
                     height: 'auto',
@@ -616,7 +596,7 @@ export default function QuizPreview({
           transition={{ duration: 0.5, delay: 0.3 }}
           className="question-title"
           style={{
-            fontSize: `${currentStyles.questionTextSize || currentStyles.questionFontSize || 24}px`,
+            fontSize: `${currentStyles.questionTextSize || 24}px`,
             fontWeight: '700',
             color: currentStyles.questionTextColor || 'white',
             marginBottom: '32px',
@@ -657,14 +637,14 @@ export default function QuizPreview({
               style={{
                 padding: '16px',
                 background: selectedAnswers.includes(answer.id) 
-                  ? currentStyles.questionSelectedOptionBackgroundColor || currentStyles.backgroundColor || '#ff6b6b'
-                  : currentStyles.questionOptionBackgroundColor || currentStyles.optionBackgroundColor || '#ffffff',
+                  ? currentStyles.questionSelectedOptionBackgroundColor || '#ff6b6b'
+                  : currentStyles.questionOptionBackgroundColor || '#ffffff',
                 border: currentStyles.questionOptionBorderWidth > 0 
                   ? `${currentStyles.questionOptionBorderWidth}px ${currentStyles.questionOptionBorderType} ${selectedAnswers.includes(answer.id) ? currentStyles.questionSelectedOptionBorderColor : currentStyles.questionOptionBorderColor}`
                   : selectedAnswers.includes(answer.id) 
                     ? '2px solid rgba(255,255,255,0.5)'
                     : '2px solid rgba(255,255,255,0.2)',
-                borderRadius: `${currentStyles.questionOptionBorderRadius || currentStyles.optionBorderRadius || 12}px`,
+                borderRadius: `${currentStyles.questionOptionBorderRadius || 12}px`,
                 cursor: 'pointer',
                 transition: currentStyles.animations ? 'all 0.3s ease' : 'none',
                 display: 'flex',
@@ -716,7 +696,7 @@ export default function QuizPreview({
 
               {/* Answer Image */}
               <AnimatePresence>
-                {answer.answerMedia && (
+                {answer.answer_media && (
                   <motion.div
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
@@ -730,14 +710,14 @@ export default function QuizPreview({
                       overflow: 'hidden',
                       border: '1px solid rgba(255,255,255,0.2)',
                       background: 'rgba(255,255,255,0.1)',
-                      marginBottom: '4px'
+                      marginBottom: '4px',
+                      position: 'relative'
                     }}>
-                      <img
-                        src={answer.answerMedia}
+                      <Image
+                        src={answer.answer_media}
                         alt="Answer image"
+                        fill
                         style={{
-                          width: '100%',
-                          height: '100%',
                           objectFit: 'cover'
                         }}
                       />
@@ -756,7 +736,7 @@ export default function QuizPreview({
                 <span 
                   className="answer-text"
                   style={{
-                    fontSize: `${currentStyles.questionOptionTextSize || currentStyles.optionFontSize || 18}px`,
+                    fontSize: `${currentStyles.questionOptionTextSize || 18}px`,
                     fontWeight: '600',
                     color: selectedAnswers.includes(answer.id) 
                       ? currentStyles.questionSelectedOptionTextColor || 'white' 
@@ -785,11 +765,13 @@ export default function QuizPreview({
                   pointerEvents: 'none'
                 }} 
                 onMouseEnter={(e) => {
-                  e.currentTarget.parentElement.style.transform = 'scale(1.02) translateY(-2px)';
+                  const parent = e.currentTarget.parentElement as HTMLElement;
+                  if (parent) parent.style.transform = 'scale(1.02) translateY(-2px)';
                   e.currentTarget.style.left = '100%';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.parentElement.style.transform = 'scale(1) translateY(0)';
+                  const parent = e.currentTarget.parentElement as HTMLElement;
+                  if (parent) parent.style.transform = 'scale(1) translateY(0)';
                   e.currentTarget.style.left = '-100%';
                 }}
               />
@@ -846,14 +828,18 @@ export default function QuizPreview({
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             animation: 'pulse 2s infinite'
           }} />
-          <Text variant='headingMd' as='h3' style={{ 
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            fontWeight: '700'
-          }}>
-            ✨ Live Preview
-          </Text>
+          <Box>
+            <Text variant='headingMd' as='h3'>
+              <span style={{
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                fontWeight: '700'
+              }}>
+                ✨ Live Preview
+              </span>
+            </Text>
+          </Box>
         </div>
         
         {/* Main Preview Area */}
@@ -933,43 +919,45 @@ export default function QuizPreview({
                 ? 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
                 : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             }} />
-            <Text variant="bodyXs" style={{ 
+            <div style={{ 
               fontWeight: '600',
               color: '#333'
             }}>
+              <Text as='p' variant="bodyXs">
               {currentView === 'info' 
                 ? '🏠 Quiz Bilgileri' 
-                : `🔥 Soru ${currentQuestionIndex + 1}/${questions.length}`
+                : `🔥 Soru ${currentQuestionIndex + 1}/${(questions || []).length}`
               }
-            </Text>
+              </Text>
+            </div>
           </div>
 
           <motion.button
             onClick={handleNext}
-            disabled={currentView === 'question' && currentQuestionIndex >= questions.length - 1}
+            disabled={currentView === 'question' && currentQuestionIndex >= (questions || []).length - 1}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             style={{
-              background: (currentView === 'question' && currentQuestionIndex >= questions.length - 1)
+              background: (currentView === 'question' && currentQuestionIndex >= (questions || []).length - 1)
                 ? 'rgba(0,0,0,0.1)'
                 : currentStyles.navOkIconColor || 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
               border: currentStyles.navButtonBorderWidth > 0 ? `${currentStyles.navButtonBorderWidth}px ${currentStyles.navButtonBorderType} ${currentStyles.navButtonBorderColor}` : 'none',
               borderRadius: `${currentStyles.navButtonBorderRadius || 12}px`,
               padding: '12px 24px',
-              color: (currentView === 'question' && currentQuestionIndex >= questions.length - 1) 
+              color: (currentView === 'question' && currentQuestionIndex >= (questions || []).length - 1) 
                 ? '#666' 
                 : 'white',
               fontWeight: currentStyles.navButtonTextType === 'bold' ? '600' : '400',
               fontStyle: currentStyles.navButtonTextType === 'italic' ? 'italic' : 'normal',
               fontSize: `${currentStyles.navButtonTextSize || 16}px`,
-              cursor: (currentView === 'question' && currentQuestionIndex >= questions.length - 1) 
+              cursor: (currentView === 'question' && currentQuestionIndex >= (questions || []).length - 1) 
                 ? 'not-allowed' 
                 : 'pointer',
-              boxShadow: (currentView === 'question' && currentQuestionIndex >= questions.length - 1)
+              boxShadow: (currentView === 'question' && currentQuestionIndex >= (questions || []).length - 1)
                 ? 'none'
                 : '0 4px 15px rgba(240, 147, 251, 0.3)',
               transition: currentStyles.animations ? 'all 0.3s ease' : 'none',
-              opacity: (currentView === 'question' && currentQuestionIndex >= questions.length - 1) 
+              opacity: (currentView === 'question' && currentQuestionIndex >= (questions || []).length - 1) 
                 ? 0.5 
                 : 1,
               fontFamily: currentStyles.fontFamily || 'Arial, sans-serif',

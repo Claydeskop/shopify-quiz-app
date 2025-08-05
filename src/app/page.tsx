@@ -12,7 +12,7 @@ import {
 import enTranslations from '@shopify/polaris/locales/en.json';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import QuizBuilder from '../components/QuizBuilder';
 import QuizList from '../components/QuizList';
 import type { Quiz, QuizFormData } from '@/types';
@@ -26,6 +26,7 @@ interface QuizBuilderRef {
 function AppContent() {
   const shopify = useAppBridge();
   const [quizTitle, setQuizTitle] = useState('');
+  const [quizDescription, setQuizDescription] = useState('');
   const [quizType, setQuizType] = useState('product-recommendation');
   const [isSaving, setIsSaving] = useState(false);
   const [refreshQuizList, setRefreshQuizList] = useState(0);
@@ -39,6 +40,7 @@ function AppContent() {
     setIsEditing(false);
     setEditingQuizId(null);
     setQuizTitle('');
+    setQuizDescription('');
     setQuizType('product-recommendation');
     shopify.modal.show('create-quiz-modal');
   };
@@ -53,14 +55,17 @@ function AppContent() {
         setIsEditing(true);
         setEditingQuizId(quizId);
         setQuizTitle(quiz.title);
+        setQuizDescription(quiz.description || '');
         setQuizType(quiz.quizType);
         
-        // Load quiz data into QuizBuilder
-        if (quizBuilderRef.current && quizBuilderRef.current.loadQuizData) {
-          quizBuilderRef.current.loadQuizData(quiz);
-        }
-        
         shopify.modal.show('create-quiz-modal');
+        
+        // Load quiz data into QuizBuilder after modal is shown
+        setTimeout(() => {
+          if (quizBuilderRef.current && quizBuilderRef.current.loadQuizData) {
+            quizBuilderRef.current.loadQuizData(quiz);
+          }
+        }, 100);
       } else {
         shopify.toast.show('Failed to load quiz data', { isError: true });
       }
@@ -123,9 +128,13 @@ function AppContent() {
       const quizData = quizBuilderRef.current.getQuizData();
       
       const saveData = {
+        ...quizData,
         title: quizTitle.trim() || 'Untitled Quiz',
         quizType: quizType,
-        ...quizData
+        // Include internal quiz data from QuizBuilder
+        internalTitle: quizData.internalTitle,
+        internalDescription: quizData.internalDescription,
+        quizImage: quizData.quizImage
       };
 
       console.log('Saving quiz data:', saveData);
@@ -185,10 +194,9 @@ function AppContent() {
         if (quizBuilderRef.current && quizBuilderRef.current.loadQuizData) {
           quizBuilderRef.current.loadQuizData({
             questions: [],
-            answers: [],
-            internalQuizTitle: 'Bu quiz hangi ürün size en uygun olduğunu bulmanıza yardımcı olacak',
-            internalQuizDescription: 'Kişisel tercihlerinizi ve ihtiyaçlarınızı anlayarak size özel ürün önerileri sunuyoruz. Sadece birkaç soruyu yanıtlayın ve size en uygun seçenekleri keşfedin.',
-            quizImage: null,
+            internal_quiz_title: 'Bu quiz hangi ürün size en uygun olduğunu bulmanıza yardımcı olacak',
+            internal_quiz_description: 'Kişisel tercihlerinizi ve ihtiyaçlarınızı anlayarak size özel ürün önerileri sunuyoruz. Sadece birkaç soruyu yanıtlayın ve size en uygun seçenekleri keşfedin.',
+            quiz_image: undefined,
             is_active: false,
             auto_transition: false,
             selected_collections: []
@@ -274,8 +282,10 @@ function AppContent() {
           <QuizBuilder
             ref={quizBuilderRef}
             quizTitle={quizTitle}
+            quizDescription={quizDescription}
             quizType={quizType}
             onTitleChange={setQuizTitle}
+            onDescriptionChange={setQuizDescription}
             onTypeChange={setQuizType}
           />
           
@@ -301,10 +311,9 @@ function AppContent() {
               if (quizBuilderRef.current && quizBuilderRef.current.loadQuizData) {
                 quizBuilderRef.current.loadQuizData({
                   questions: [],
-                  answers: [],
-                  internalQuizTitle: 'Bu quiz hangi ürün size en uygun olduğunu bulmanıza yardımcı olacak',
-                  internalQuizDescription: 'Kişisel tercihlerinizi ve ihtiyaçlarınızı anlayarak size özel ürün önerileri sunuyoruz. Sadece birkaç soruyu yanıtlayın ve size en uygun seçenekleri keşfedin.',
-                  quizImage: null
+                  internal_quiz_title: 'Bu quiz hangi ürün size en uygun olduğunu bulmanıza yardımcı olacak',
+                  internal_quiz_description: 'Kişisel tercihlerinizi ve ihtiyaçlarınızı anlayarak size özel ürün önerileri sunuyoruz. Sadece birkaç soruyu yanıtlayın ve size en uygun seçenekleri keşfedin.',
+                  quiz_image: undefined
                 });
               }
             }}>
@@ -345,7 +354,7 @@ function AppContent() {
   );
 }
 
-export default function HomePage() {
+function SearchParamsComponent() {
   const [appBridgeLoaded, setAppBridgeLoaded] = useState(false);
   const searchParams = useSearchParams();
   
@@ -409,5 +418,23 @@ export default function HomePage() {
     <AppProvider i18n={enTranslations}>
       <AppContent />
     </AppProvider>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={
+      <AppProvider i18n={enTranslations}>
+        <Page title="Loading...">
+          <Card>
+            <Box padding="400">
+              <Text as="p">Loading...</Text>
+            </Box>
+          </Card>
+        </Page>
+      </AppProvider>
+    }>
+      <SearchParamsComponent />
+    </Suspense>
   );
 }

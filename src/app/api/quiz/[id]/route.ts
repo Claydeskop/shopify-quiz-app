@@ -79,32 +79,30 @@ interface DatabaseMetafieldCondition {
 interface QuizUpdateRequestBody {
   title: string;
   quizType: string;
-  internalQuizTitle: string;
-  internalQuizDescription: string;
-  isActive: boolean;
-  autoTransition: boolean;
-  selectedCollections: ShopifyCollection[];
+  internalTitle: string;
+  internalDescription: string;
   quizImage: string | null;
+  isActive: boolean;
   styles: StyleSettings;
   questions: Array<{
     id: string;
     text: string;
-    showAnswers: boolean;
-    allowMultipleSelection: boolean;
-    questionMedia: string | null;
+    show_answers: boolean;
+    allow_multiple_selection: boolean;
+    question_media: string | null;
   }>;
   answers: Array<{
     id: string;
     text: string;
     questionId: string;
-    answerMedia: string | null;
-    redirectToLink: boolean;
-    redirectUrl: string;
-    relatedProducts: string[];
-    relatedTags: string[];
-    relatedCategories: string[];
-    relatedCollections: ShopifyCollection[];
-    metafieldConditions: AnswerCondition[];
+    answer_media: string | null;
+    redirect_to_link: boolean;
+    redirect_url: string;
+    products: string[];
+    tags: string[];
+    categories: string[];
+    collections: ShopifyCollection[];
+    conditions: AnswerCondition[];
   }>;
 }
 
@@ -271,12 +269,12 @@ export async function GET(
       id: quiz.id,
       title: quiz.title,
       quizType: quiz.quiz_type,
-      internalQuizTitle: quiz.internal_quiz_title,
-      internalQuizDescription: quiz.internal_quiz_description,
+      internalQuizTitle: quiz.internal_quiz_title || quiz.title,
+      internalQuizDescription: quiz.internal_quiz_description || quiz.description,
       is_active: quiz.is_active,
-      auto_transition: quiz.auto_transition,
-      selected_collections: quiz.selected_collections,
-      quizImage: quiz.quiz_image || null,
+      auto_transition: false, // Default value since field doesn't exist
+      selected_collections: [], // Default value since field doesn't exist  
+      quizImage: quiz.quiz_image,
       styles: quiz.styles || {
         backgroundColor: '#2c5aa0',
         optionBackgroundColor: '#ffffff',
@@ -348,13 +346,10 @@ export async function PUT(
       .update({
         title: body.title,
         quiz_type: body.quizType,
-        internal_quiz_title: body.internalQuizTitle,
-        internal_quiz_description: body.internalQuizDescription,
-        is_active: body.isActive,
-        auto_transition: body.autoTransition,
-        selected_collections: body.selectedCollections || [],
+        internal_quiz_title: body.internalTitle,
+        internal_quiz_description: body.internalDescription,
         quiz_image: body.quizImage,
-        shopify_collection_ids: body.selectedCollections?.map((c: ShopifyCollection) => c.id) || [],
+        is_active: body.isActive,
         styles: body.styles || {
           backgroundColor: '#2c5aa0',
           optionBackgroundColor: '#ffffff',
@@ -391,9 +386,9 @@ export async function PUT(
     const questionsToInsert = body.questions.map((question, index: number) => ({
       quiz_id: quizId,
       text: question.text,
-      show_answers: question.showAnswers,
-      allow_multiple_selection: question.allowMultipleSelection,
-      question_media: question.questionMedia,
+      show_answers: question.show_answers,
+      allow_multiple_selection: question.allow_multiple_selection,
+      question_media: question.question_media,
       question_order: index + 1,
       is_required: true,
       is_skippable: false,
@@ -421,15 +416,15 @@ export async function PUT(
     });
 
     // Save new answers
-    const answersToInsert = body.answers.map((answer, index: number) => ({
+    const answersToInsert = (body.answers || []).map((answer, index: number) => ({
       question_id: questionIdMap[answer.questionId],
       text: answer.text,
-      answer_media: answer.answerMedia,
-      redirect_to_link: answer.redirectToLink,
-      redirect_url: answer.redirectUrl,
-      related_products: answer.relatedProducts || [],
-      related_tags: answer.relatedTags || [],
-      related_categories: answer.relatedCategories || [],
+      answer_media: answer.answer_media,
+      redirect_to_link: answer.redirect_to_link,
+      redirect_url: answer.redirect_url,
+      related_products: answer.products || [],
+      related_tags: answer.tags || [],
+      related_categories: answer.categories || [],
       answer_order: index + 1,
       is_default: false,
       weight: 1
@@ -466,8 +461,8 @@ export async function PUT(
       weight: number;
     }> = [];
     body.answers.forEach((answer) => {
-      if (answer.metafieldConditions && answer.metafieldConditions.length > 0) {
-        answer.metafieldConditions.forEach((condition) => {
+      if (answer.conditions && answer.conditions.length > 0) {
+        answer.conditions.forEach((condition) => {
           if (condition.metafield && condition.value) {
             metafieldConditionsToInsert.push({
               answer_id: answerIdMap[answer.id],
@@ -495,8 +490,8 @@ export async function PUT(
       collection_order: number;
     }> = [];
     body.answers.forEach((answer) => {
-      if (answer.relatedCollections && answer.relatedCollections.length > 0) {
-        answer.relatedCollections.forEach((collection, index: number) => {
+      if (answer.collections && answer.collections.length > 0) {
+        answer.collections.forEach((collection, index: number) => {
           if (collection.id) {
             answerCollectionsToInsert.push({
               answer_id: answerIdMap[answer.id],

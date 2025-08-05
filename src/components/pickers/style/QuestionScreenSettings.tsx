@@ -1,7 +1,7 @@
 'use client';
 
-import { Text, TextField, RangeSlider, Select, BlockStack, Card, Divider } from '@shopify/polaris';
-import { StyleSettings, StyleChangeHandler } from '../../../types';
+import { BlockStack, Box, Card, Divider, RangeSlider, Select, Text, TextField } from '@shopify/polaris';
+import { StyleChangeHandler, StyleSettings } from '../../../types';
 
 interface QuestionScreenSettingsProps {
   styles: StyleSettings;
@@ -10,13 +10,16 @@ interface QuestionScreenSettingsProps {
 
 const ColorInput = ({ label, value, onChange }: { label: string, value: string, onChange: (value: string) => void }) => (
   <div style={{ marginBottom: '16px' }}>
-    <Text variant='bodyMd' as='p' style={{ marginBottom: '8px' }}>{label}</Text>
+    <Box paddingBlockEnd='200'>
+      <Text variant='bodyMd' as='p'>{label}</Text>
+    </Box>
     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
       <TextField
         value={value}
         onChange={onChange}
         placeholder="#ffffff"
         autoComplete="off"
+        label="Color"
       />
       <div 
         style={{ 
@@ -120,28 +123,37 @@ export default function QuestionScreenSettings({ styles, onStyleChange }: Questi
           <Text variant='headingXs' as='h6'>📐 Borderlar</Text>
           
           <div>
-            <Text variant='bodyMd' as='p' style={{ marginBottom: '8px' }}>Şık Border Kalınlık: {styles.questionOptionBorderWidth}px</Text>
+            <Box paddingBlockEnd='200'>
+              <Text variant='bodyMd' as='p'>Şık Border Kalınlık: {styles.questionOptionBorderWidth}px</Text>
+            </Box>
             <RangeSlider
               value={styles.questionOptionBorderWidth}
               min={0}
               max={10}
-              onChange={(value) => onStyleChange('questionOptionBorderWidth', value)}
+              onChange={(value) => onStyleChange('questionOptionBorderWidth', Array.isArray(value) ? value[0] : value)}
+              label="Slider"
             />
           </div>
           
           <div>
-            <Text variant='bodyMd' as='p' style={{ marginBottom: '8px' }}>Şık Border Radius: {styles.questionOptionBorderRadius}px</Text>
+            <Box paddingBlockEnd='200'>
+              <Text variant='bodyMd' as='p'>Şık Border Radius: {styles.questionOptionBorderRadius}px</Text>
+            </Box>
             <RangeSlider
               value={styles.questionOptionBorderRadius}
               min={0}
               max={50}
-              onChange={(value) => onStyleChange('questionOptionBorderRadius', value)}
+              onChange={(value) => onStyleChange('questionOptionBorderRadius', Array.isArray(value) ? value[0] : value)}
+              label="Slider"
             />
           </div>
           
           <div>
-            <Text variant='bodyMd' as='p' style={{ marginBottom: '8px' }}>Şık Border Tipi</Text>
+            <Box paddingBlockEnd='200'>
+              <Text variant='bodyMd' as='p'>Şık Border Tipi</Text>
+            </Box>
             <Select
+              label="Şık Border Tipi"
               options={borderTypeOptions}
               value={styles.questionOptionBorderType}
               onChange={(value) => onStyleChange('questionOptionBorderType', value)}
@@ -151,28 +163,37 @@ export default function QuestionScreenSettings({ styles, onStyleChange }: Questi
           <Divider />
           
           <div>
-            <Text variant='bodyMd' as='p' style={{ marginBottom: '8px' }}>Görsel Border Kalınlık: {styles.questionImageBorderWidth}px</Text>
+            <Box paddingBlockEnd='200'>
+              <Text variant='bodyMd' as='p'>Görsel Border Kalınlık: {styles.questionImageBorderWidth}px</Text>
+            </Box>
             <RangeSlider
               value={styles.questionImageBorderWidth}
               min={0}
               max={10}
-              onChange={(value) => onStyleChange('questionImageBorderWidth', value)}
+              onChange={(value) => onStyleChange('questionImageBorderWidth', Array.isArray(value) ? value[0] : value)}
+              label="Slider"
             />
           </div>
           
           <div>
-            <Text variant='bodyMd' as='p' style={{ marginBottom: '8px' }}>Görsel Border Radius: {styles.questionImageBorderRadius}px</Text>
+            <Box paddingBlockEnd='200'>
+              <Text variant='bodyMd' as='p'>Görsel Border Radius: {styles.questionImageBorderRadius}px</Text>
+            </Box>
             <RangeSlider
               value={styles.questionImageBorderRadius}
               min={0}
               max={50}
-              onChange={(value) => onStyleChange('questionImageBorderRadius', value)}
+              onChange={(value) => onStyleChange('questionImageBorderRadius', Array.isArray(value) ? value[0] : value)}
+              label="Slider"
             />
           </div>
           
           <div>
-            <Text variant='bodyMd' as='p' style={{ marginBottom: '8px' }}>Görsel Border Tipi</Text>
+            <Box paddingBlockEnd='200'>
+              <Text variant='bodyMd' as='p'>Görsel Border Tipi</Text>
+            </Box>
             <Select
+              label="Görsel Border Tipi"
               options={borderTypeOptions}
               value={styles.questionImageBorderType}
               onChange={(value) => onStyleChange('questionImageBorderType', value)}
@@ -187,42 +208,54 @@ export default function QuestionScreenSettings({ styles, onStyleChange }: Questi
           <Text variant='headingXs' as='h6'>📝 Text ve Boyutlar</Text>
           
           <div>
-            <Text variant='bodyMd' as='p' style={{ marginBottom: '8px' }}>Soru Text Boyutu: {styles.questionTextSize}px</Text>
+            <Box paddingBlockEnd='200'>
+              <Text variant='bodyMd' as='p'>Soru Text Boyutu: {styles.questionTextSize}px</Text>
+            </Box>
             <RangeSlider
               value={styles.questionTextSize}
               min={14}
               max={48}
-              onChange={(value) => onStyleChange('questionTextSize', value)}
+              onChange={(value) => onStyleChange('questionTextSize', Array.isArray(value) ? value[0] : value)}
+              label="Slider"
             />
           </div>
           
           <div>
-            <Text variant='bodyMd' as='p' style={{ marginBottom: '8px' }}>Görsel Yüksekliği: {styles.questionImageHeight}px</Text>
+            <Box paddingBlockEnd='200'>
+              <Text variant='bodyMd' as='p'>Görsel Yüksekliği: {styles.questionImageHeight}px</Text>
+            </Box>
             <RangeSlider
               value={styles.questionImageHeight}
               min={100}
               max={500}
-              onChange={(value) => onStyleChange('questionImageHeight', value)}
+              onChange={(value) => onStyleChange('questionImageHeight', Array.isArray(value) ? value[0] : value)}
+              label="Slider"
             />
           </div>
           
           <div>
-            <Text variant='bodyMd' as='p' style={{ marginBottom: '8px' }}>Şık Metin Boyutu: {styles.questionOptionTextSize}px</Text>
+            <Box paddingBlockEnd='200'>
+              <Text variant='bodyMd' as='p'>Şık Metin Boyutu: {styles.questionOptionTextSize}px</Text>
+            </Box>
             <RangeSlider
               value={styles.questionOptionTextSize}
               min={12}
               max={32}
-              onChange={(value) => onStyleChange('questionOptionTextSize', value)}
+              onChange={(value) => onStyleChange('questionOptionTextSize', Array.isArray(value) ? value[0] : value)}
+              label="Slider"
             />
           </div>
           
           <div>
-            <Text variant='bodyMd' as='p' style={{ marginBottom: '8px' }}>Şık Görsel Boyutu: {styles.questionOptionImageSize}px</Text>
+            <Box paddingBlockEnd='200'>
+              <Text variant='bodyMd' as='p'>Şık Görsel Boyutu: {styles.questionOptionImageSize}px</Text>
+            </Box>
             <RangeSlider
               value={styles.questionOptionImageSize}
               min={50}
               max={200}
-              onChange={(value) => onStyleChange('questionOptionImageSize', value)}
+              onChange={(value) => onStyleChange('questionOptionImageSize', Array.isArray(value) ? value[0] : value)}
+              label="Slider"
             />
           </div>
         </BlockStack>

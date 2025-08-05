@@ -3,31 +3,12 @@
 import { Box, Card, Text } from '@shopify/polaris';
 import { useEffect, useRef } from 'react';
 import QuestionBuilder from './QuestionBuilder';
-import { ShopifyCollection } from '../../types';
-
-interface Question {
-  id: string;
-  text: string;
-  showAnswers: boolean;
-  allowMultipleSelection: boolean;
-  questionMedia: string | null;
-}
-
-interface Answer {
-  id: string;
-  text: string;
-  questionId: string;
-  answerMedia: string | null;
-  relatedCollections: ShopifyCollection[];
-  redirectToLink: boolean;
-  redirectUrl: string;
-}
+import { Question, Answer, ShopifyCollection } from '../../types';
 
 interface QuizContentProps {
   onTabChange: (tab: string) => void;
   activeTab: string;
   questions: Question[];
-  answers: Answer[];
   onQuestionAdd: () => void;
   onQuestionSelect: (questionId: string) => void;
   onQuestionReorder: (dragIndex: number, hoverIndex: number) => void;
@@ -42,7 +23,6 @@ export default function QuizContent({
   onTabChange, 
   activeTab, 
   questions,
-  answers,
   onQuestionAdd, 
   onQuestionSelect,
   onQuestionReorder,
@@ -144,7 +124,6 @@ export default function QuizContent({
               <Box paddingBlockStart='200'>
                 <QuestionBuilder 
                   questions={questions}
-                  answers={answers}
                   onQuestionAdd={onQuestionAdd}
                   onQuestionSelect={onQuestionSelect}
                   onQuestionReorder={onQuestionReorder}
