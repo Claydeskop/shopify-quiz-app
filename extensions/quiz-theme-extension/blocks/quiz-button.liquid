@@ -145,7 +145,7 @@
         
         // Fetch quiz data (fallback to direct API if proxy fails)
         const proxyUrl = `/apps/quiz-app/api/quiz/public/${slug}`;
-        const directUrl = `https://giant-heads-relate.loca.lt/api/proxy/quiz/public/${slug}`;
+        const directUrl = `https://shopify-quiz-app.vercel.app/api/proxy/quiz/public/${slug}`;
         
         let url = proxyUrl;
         console.log('Trying proxy URL first:', url);

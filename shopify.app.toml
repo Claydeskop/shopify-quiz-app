@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "b0ebb1c31cc4fce68c44006d06eb1b18"
-application_url = "https://giant-heads-relate.loca.lt/"
+application_url = "https://shopify-quiz-app.vercel.app/"
 embedded = true
 name = "Product Finder Quiz App (Dev)"
 handle = "product-finder-quiz-app-dev"
@@ -20,12 +20,12 @@ scopes = "read_content,read_products,read_themes,write_content,write_products,wr
 
 [auth]
 redirect_urls = [
-  "https://giant-heads-relate.loca.lt/api/auth",
-  "https://giant-heads-relate.loca.lt/api/auth/callback"
+  "https://shopify-quiz-app.vercel.app/api/auth",
+  "https://shopify-quiz-app.vercel.app/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://giant-heads-relate.loca.lt/api/proxy"
+url = "https://shopify-quiz-app.vercel.app/api/proxy"
 subpath = "quiz-app"
 prefix = "apps"
 
