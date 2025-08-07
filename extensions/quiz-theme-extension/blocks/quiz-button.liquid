@@ -19,8 +19,8 @@
 </div>
 
 <!-- Quiz Modal -->
-<div id="quiz-modal" class="quiz-modal" style="display: none;">
-  <div class="quiz-modal-content">
+<div id="quiz-modal" class="quiz-modal" style="display: none;" onclick="closeQuizModalIfOutside(event)">
+  <div class="quiz-modal-content" onclick="event.stopPropagation()">
     <div id="quiz-container"></div>
   </div>
 </div>
@@ -34,20 +34,81 @@
     let selectedAnswers = [];
     let allAnswers = {};
 
-    // Default styles
+    // Default styles - Match database StyleSettings interface exactly
     const defaultStyles = {
-      backgroundColor: '#2c5aa0',
-      optionBackgroundColor: '#ffffff',
-      titleFontSize: 32,
-      questionFontSize: 24,
-      optionFontSize: 18,
-      quizBorderRadius: 24,
-      optionBorderRadius: 12,
-      quizBorderWidth: 0,
-      quizBorderColor: '#ffffff',
-      optionBorderWidth: 2,
-      optionBorderColor: '#ffffff',
-      buttonColor: '#ff6b6b',
+      // General
+      fontFamily: 'Arial, sans-serif',
+      animations: true,
+      
+      // Intro Screen
+      introBackgroundColor: '#f8f9fa',
+      introStartButtonColor: '#d63384',
+      introStartButtonTextColor: '#ffffff',
+      introQuestionTextColor: '#212529',
+      introDescriptionTextColor: '#6c757d',
+      introStartButtonBorderColor: '#d63384',
+      introImageBorderColor: '#dee2e6',
+      introButtonBorderWidth: 0,
+      introButtonBorderRadius: 25,
+      introButtonBorderType: 'solid',
+      introImageBorderWidth: 0,
+      introImageBorderRadius: 20,
+      introImageBorderType: 'solid',
+      introTitleSize: 32,
+      introDescriptionSize: 14,
+      introButtonTextSize: 16,
+      introIconSize: 20,
+      introImageHeight: 100,
+      
+      // Question Screen  
+      questionBackgroundColor: '#f8f9fa',
+      questionOptionBackgroundColor: '#ffffff',
+      questionOptionBorderColor: '#dee2e6',
+      questionTextColor: '#212529',
+      questionOptionTextColor: '#495057',
+      questionImageBorderColor: '#dee2e6',
+      questionSelectedOptionBackgroundColor: '#d63384',
+      questionSelectedOptionTextColor: '#ffffff',
+      questionSelectedOptionBorderColor: '#d63384',
+      questionOptionBorderWidth: 1,
+      questionOptionBorderRadius: 15,
+      questionOptionBorderType: 'solid',
+      questionImageBorderWidth: 0,
+      questionImageBorderRadius: 15,
+      questionImageBorderType: 'solid',
+      questionTextSize: 24,
+      questionImageHeight: 200,
+      questionOptionTextSize: 14,
+      questionOptionImageSize: 100,
+      
+      // Navigation
+      navButtonBorderWidth: 0,
+      navButtonBorderColor: '#dee2e6',
+      navButtonBorderType: 'solid',
+      navButtonBorderRadius: 20,
+      navButtonTextSize: 14,
+      navButtonTextType: 'normal',
+      navPrevButtonColor: '#6c757d',
+      navPrevButtonTextColor: '#ffffff',
+      navOkIconColor: '#d63384',
+      
+      // Counter
+      counterBackgroundColor: 'rgba(214, 51, 132, 0.1)',
+      counterBorderColor: '#d63384',
+      counterTextColor: '#d63384',
+      counterBorderWidth: 1,
+      counterBorderRadius: 15,
+      counterBorderType: 'solid',
+      counterTextSize: 12,
+      counterTextStyle: 'normal',
+      
+      // Results
+      resultBackgroundColor: '#f8f9fa',
+      resultButtonColor: '#d63384',
+      resultButtonTextColor: '#ffffff',
+      resultTextColor: '#212529',
+      
+      // Custom CSS
       customCSS: ''
     };
 
@@ -133,6 +194,12 @@
       currentQuiz = null;
     }
 
+    function closeQuizModalIfOutside(event) {
+      if (event.target === event.currentTarget) {
+        closeQuizModal();
+      }
+    }
+
     function getLoadingHTML() {
       return `
         <div class="quiz-loading">
@@ -154,7 +221,10 @@
 
     function renderQuiz() {
       const container = document.getElementById('quiz-container');
-      const styles = { ...defaultStyles, ...(currentQuiz.style_settings || {}) };
+      // Veritabanından gelen styles'ı kullan
+      const styles = (currentQuiz.style_settings && Object.keys(currentQuiz.style_settings).length > 0) 
+        ? { ...defaultStyles, ...currentQuiz.style_settings }
+        : defaultStyles;
       
       let content = '';
       
@@ -169,7 +239,27 @@
       container.innerHTML = `
         <div class="quiz-wrapper">
           <!-- Close Button -->
-          <button class="quiz-close-btn" onclick="closeQuizModal()">×</button>
+          <button class="quiz-close-btn" onclick="closeQuizModal()" style="
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid white;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+          " onmouseover="this.style.background='rgba(0,0,0,0.9)'; this.style.transform='scale(1.05)'" 
+             onmouseout="this.style.background='rgba(0,0,0,0.8)'; this.style.transform='scale(1)'">×</button>
           
           ${content}
           
@@ -188,26 +278,44 @@
     function renderQuizInfo(styles) {
       return `
         <div class="quiz-info" style="
-          background: ${styles.backgroundColor};
-          border-radius: ${styles.quizBorderRadius}px;
-          border: ${styles.quizBorderWidth > 0 ? `${styles.quizBorderWidth}px solid ${styles.quizBorderColor}` : 'none'};
+          background: ${styles.introBackgroundColor || styles.questionBackgroundColor || '#2c5aa0'};
+          border-radius: ${styles.questionOptionBorderRadius || 24}px;
+          font-family: ${styles.fontFamily || 'Arial, sans-serif'};
         ">
           ${currentQuiz.image ? `
-            <div class="quiz-image">
-              <img src="${currentQuiz.image}" alt="Quiz image" />
+            <div class="quiz-image" style="height: ${styles.introImageHeight || 200}px;">
+              <img src="${currentQuiz.image}" alt="Quiz image" 
+                   style="
+                     border-radius: ${styles.introImageBorderRadius || 12}px;
+                     border: ${styles.introImageBorderWidth || 0}px ${styles.introImageBorderType || 'solid'} ${styles.introImageBorderColor || '#ffffff'};
+                   " />
             </div>
           ` : ''}
           
-          <h1 class="quiz-title" style="font-size: ${styles.titleFontSize}px;">
+          <h1 class="quiz-title" style="
+            font-size: ${styles.introTitleSize || 32}px;
+            color: ${styles.introQuestionTextColor || '#ffffff'};
+          ">
             ${currentQuiz.title}
           </h1>
           
           ${currentQuiz.description ? `
-            <p class="quiz-description">${currentQuiz.description}</p>
+            <p class="quiz-description" style="
+              font-size: ${styles.introDescriptionSize || 18}px;
+              color: ${styles.introDescriptionTextColor || '#ffffff'};
+            ">
+              ${currentQuiz.description}
+            </p>
           ` : ''}
           
           ${currentQuiz.questions.length > 0 ? `
-            <button class="quiz-start-btn" data-action="start" style="background: ${styles.buttonColor};">
+            <button class="quiz-start-btn" data-action="start" style="
+              background: ${styles.introStartButtonColor || '#ff6b6b'};
+              color: ${styles.introStartButtonTextColor || '#ffffff'};
+              font-size: ${styles.introButtonTextSize || 18}px;
+              border: ${styles.introButtonBorderWidth || 0}px ${styles.introButtonBorderType || 'solid'} ${styles.introStartButtonBorderColor || '#ffffff'};
+              border-radius: ${styles.introButtonBorderRadius || 12}px;
+            ">
               🚀 Quiz'i Başlat
             </button>
           ` : ''}
@@ -223,9 +331,9 @@
 
       return `
         <div class="quiz-question" style="
-          background: ${styles.backgroundColor};
-          border-radius: ${styles.quizBorderRadius}px;
-          border: ${styles.quizBorderWidth > 0 ? `${styles.quizBorderWidth}px solid ${styles.quizBorderColor}` : 'none'};
+          background: ${styles.questionBackgroundColor || '#2c5aa0'};
+          border-radius: ${styles.questionOptionBorderRadius || 24}px;
+          font-family: ${styles.fontFamily || 'Arial, sans-serif'};
         ">
           <!-- Progress Bar -->
           <div class="quiz-progress">
@@ -234,16 +342,31 @@
 
           <!-- Question Counter -->
           <div class="quiz-counter">
-            <span>Soru ${currentQuestionIndex + 1} / ${currentQuiz.questions.length}</span>
+            <span style="
+              background: ${styles.counterBackgroundColor || 'rgba(255,255,255,0.2)'};
+              color: ${styles.counterTextColor || '#ffffff'};
+              font-size: ${styles.counterTextSize || 14}px;
+              border: ${styles.counterBorderWidth || 0}px ${styles.counterBorderType || 'solid'} ${styles.counterBorderColor || '#ffffff'};
+              border-radius: ${styles.counterBorderRadius || 20}px;
+            ">
+              Soru ${currentQuestionIndex + 1} / ${currentQuiz.questions.length}
+            </span>
           </div>
 
           ${question.questionMedia ? `
-            <div class="quiz-question-image">
-              <img src="${question.questionMedia}" alt="Question image" />
+            <div class="quiz-question-image" style="height: ${styles.questionImageHeight || 200}px;">
+              <img src="${question.questionMedia}" alt="Question image" 
+                   style="
+                     border-radius: ${styles.questionImageBorderRadius || 12}px;
+                     border: ${styles.questionImageBorderWidth || 0}px ${styles.questionImageBorderType || 'solid'} ${styles.questionImageBorderColor || '#ffffff'};
+                   " />
             </div>
           ` : ''}
 
-          <h2 class="quiz-question-text" style="font-size: ${styles.questionFontSize}px;">
+          <h2 class="quiz-question-text" style="
+            font-size: ${styles.questionTextSize || 24}px;
+            color: ${styles.questionTextColor || '#ffffff'};
+          ">
             ${question.text}
           </h2>
 
@@ -252,23 +375,24 @@
               <div class="quiz-answer ${selectedAnswers.includes(answer.id) ? 'selected' : ''}" 
                    data-answer-id="${answer.id}"
                    style="
-                     background: ${selectedAnswers.includes(answer.id) ? styles.backgroundColor : styles.optionBackgroundColor};
-                     border: ${styles.optionBorderWidth}px solid ${styles.optionBorderColor};
-                     border-radius: ${styles.optionBorderRadius}px;
+                     background: ${selectedAnswers.includes(answer.id) ? styles.questionSelectedOptionBackgroundColor || '#ff6b6b' : styles.questionOptionBackgroundColor || '#ffffff'};
+                     border: ${styles.questionOptionBorderWidth || 2}px ${styles.questionOptionBorderType || 'solid'} ${selectedAnswers.includes(answer.id) ? styles.questionSelectedOptionBorderColor || '#ff6b6b' : styles.questionOptionBorderColor || '#ffffff'};
+                     border-radius: ${styles.questionOptionBorderRadius || 12}px;
+                     width: ${styles.questionOptionImageSize || 140}px;
                    ">
                 
                 <div class="quiz-answer-indicator ${selectedAnswers.includes(answer.id) ? 'selected' : ''}"></div>
                 
                 ${answer.answerMedia ? `
-                  <div class="quiz-answer-image">
+                  <div class="quiz-answer-image" style="height: ${Math.floor((styles.questionOptionImageSize || 140) * 0.4)}px;">
                     <img src="${answer.answerMedia}" alt="Answer image" />
                   </div>
                 ` : ''}
                 
                 <span class="quiz-answer-text" 
                       style="
-                        font-size: ${styles.optionFontSize}px;
-                        color: ${selectedAnswers.includes(answer.id) ? 'white' : '#1a1a1a'};
+                        font-size: ${styles.questionOptionTextSize || 18}px;
+                        color: ${selectedAnswers.includes(answer.id) ? styles.questionSelectedOptionTextColor || '#ffffff' : styles.questionOptionTextColor || '#000000'};
                       ">
                   ${answer.text}
                 </span>
@@ -282,17 +406,29 @@
     function renderResult(styles) {
       return `
         <div class="quiz-result" style="
-          background: ${styles.backgroundColor};
-          border-radius: ${styles.quizBorderRadius}px;
+          background: ${styles.resultBackgroundColor || styles.questionBackgroundColor || '#2c5aa0'};
+          border-radius: ${styles.questionOptionBorderRadius || 24}px;
+          font-family: ${styles.fontFamily || 'Arial, sans-serif'};
         ">
           <div class="quiz-result-icon">🎉</div>
-          <h2 class="quiz-result-title" style="font-size: ${styles.titleFontSize}px;">
+          <h2 class="quiz-result-title" style="
+            font-size: ${styles.introTitleSize || 32}px;
+            color: ${styles.resultTextColor || '#ffffff'};
+          ">
             Quiz Tamamlandı!
           </h2>
-          <p class="quiz-result-description">
+          <p class="quiz-result-description" style="
+            color: ${styles.resultTextColor || '#ffffff'};
+            font-size: ${styles.introDescriptionSize || 18}px;
+          ">
             Tebrikler! Quiz'i başarıyla tamamladınız.
           </p>
-          <button class="quiz-finish-btn" data-action="finish" style="background: ${styles.buttonColor};">
+          <button class="quiz-finish-btn" data-action="finish" style="
+            background: ${styles.resultButtonColor || styles.introStartButtonColor || '#ff6b6b'};
+            color: ${styles.resultButtonTextColor || '#ffffff'};
+            font-size: ${styles.introButtonTextSize || 18}px;
+            border-radius: ${styles.introButtonBorderRadius || 12}px;
+          ">
             Kapat
           </button>
         </div>
@@ -303,11 +439,22 @@
       const canGoPrevious = !(currentView === 'info');
       const canGoNext = !(currentView === 'question' && selectedAnswers.length === 0);
       const isLastQuestion = currentView === 'question' && currentQuestionIndex >= currentQuiz.questions.length - 1;
+      // Veritabanından gelen styles'ı kullan
+      const styles = (currentQuiz.style_settings && Object.keys(currentQuiz.style_settings).length > 0) 
+        ? { ...defaultStyles, ...currentQuiz.style_settings }
+        : defaultStyles;
 
       return `
         <div class="quiz-navigation">
           <button class="quiz-nav-btn quiz-prev-btn" 
                   data-action="previous" 
+                  style="
+                    background: ${styles.navPrevButtonColor || '#ffffff'};
+                    color: ${styles.navPrevButtonTextColor || '#000000'};
+                    font-size: ${styles.navButtonTextSize || 18}px;
+                    border: ${styles.navButtonBorderWidth || 0}px ${styles.navButtonBorderType || 'solid'} ${styles.navButtonBorderColor || '#ffffff'};
+                    border-radius: ${styles.navButtonBorderRadius || 12}px;
+                  "
                   ${!canGoPrevious ? 'disabled' : ''}>
             ← Önceki
           </button>
@@ -320,6 +467,13 @@
 
           <button class="quiz-nav-btn quiz-next-btn" 
                   data-action="next" 
+                  style="
+                    background: ${styles.navOkIconColor || styles.introStartButtonColor || '#ff6b6b'};
+                    color: ${styles.introStartButtonTextColor || '#ffffff'};
+                    font-size: ${styles.navButtonTextSize || 18}px;
+                    border: ${styles.navButtonBorderWidth || 0}px ${styles.navButtonBorderType || 'solid'} ${styles.navButtonBorderColor || '#ffffff'};
+                    border-radius: ${styles.navButtonBorderRadius || 12}px;
+                  "
                   ${!canGoNext ? 'disabled' : ''}>
             ${isLastQuestion ? 'Bitir' : 'Sonraki →'}
           </button>
@@ -432,6 +586,7 @@
 
     // Make closeQuizModal global
     window.closeQuizModal = closeQuizModal;
+    window.closeQuizModalIfOutside = closeQuizModalIfOutside;
   })();
 </script>
 

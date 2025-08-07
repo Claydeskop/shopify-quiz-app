@@ -18,7 +18,9 @@ export async function GET(request: NextRequest) {
       .select(`
         id,
         title,
+        slug,
         quiz_type,
+        quiz_image,
         is_active,
         auto_transition,
         selected_collections,

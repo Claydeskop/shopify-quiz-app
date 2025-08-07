@@ -16,7 +16,9 @@ import { ShopifyCollection } from '../../types';
 interface Quiz {
   id: string;
   title: string;
+  slug: string;
   quiz_type: string;
+  quiz_image: string | null;
   is_active: boolean;
   auto_transition: boolean;
   selected_collections: ShopifyCollection[];
@@ -106,15 +108,6 @@ export default function QuizList({ onEditQuiz, onDeleteQuiz }: QuizListProps) {
     });
   };
 
-  const getQuizTypeLabel = (type: string) => {
-    const types: Record<string, string> = {
-      'product-recommendation': 'Ürün Önerisi',
-      'customer-survey': 'Müşteri Anketi', 
-      'lead-generation': 'Potansiyel Müşteri',
-      'brand-awareness': 'Marka Bilinirliği'
-    };
-    return types[type] || type;
-  };
 
   if (loading) {
     return (
@@ -170,28 +163,96 @@ export default function QuizList({ onEditQuiz, onDeleteQuiz }: QuizListProps) {
             {quizzes.map((quiz, index) => (
               <div key={quiz.id}>
                 <Box padding="300">
-                  <BlockStack gap="300">
-                    {/* Quiz Header */}
-                    <InlineStack align="space-between">
-                      <BlockStack gap="100">
-                        <InlineStack gap="200" align="start">
-                          <Text variant="headingSm" as="h4">
+                  <InlineStack gap="300" align="start">
+                    {/* Quiz Image - Sol taraf */}
+                    <div style={{ 
+                      width: '80px', 
+                      height: '80px',
+                      minWidth: '80px',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      backgroundColor: '#f6f6f7',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0
+                    }}>
+                      {quiz.quiz_image ? (
+                        <img 
+                          src={quiz.quiz_image} 
+                          alt={quiz.title}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            objectPosition: 'center'
+                          }}
+                        />
+                      ) : (
+                        <Text as="span" variant="bodySm" tone="subdued">
+                          Quiz
+                        </Text>
+                      )}
+                    </div>
+
+                    {/* Quiz Content - Orta kısım */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <BlockStack gap="200">
+                        {/* Quiz Header */}
+                        <InlineStack gap="200" align="start" wrap={false}>
+                          <Text variant="headingSm" as="h4" breakWord>
                             {quiz.title}
                           </Text>
                           <Badge tone={quiz.is_active ? 'success' : undefined}>
                             {quiz.is_active ? 'Aktif' : 'Pasif'}
                           </Badge>
                         </InlineStack>
-                        <Text as="p" tone="subdued" variant="bodySm">
-                          {quiz.internal_quiz_description}
-                        </Text>
+
+                        {/* Quiz Description - Max width ile sınırlı */}
+                        <div style={{ maxWidth: '400px' }}>
+                          <Text as="p" tone="subdued" variant="bodySm" breakWord>
+                            {quiz.internal_quiz_description}
+                          </Text>
+                        </div>
+
+                        {/* Quiz Details */}
+                        <InlineStack gap="300" wrap>
+                          <Text as="p" variant="bodySm">
+                            <strong>Slug:</strong> {quiz.slug}
+                          </Text>
+                          <Text as="p" variant="bodySm">
+                            <strong>Soru:</strong> {quiz.questionCount}
+                          </Text>
+                          <Text as="p" variant="bodySm">
+                            <strong>Cevap:</strong> {quiz.answerCount}
+                          </Text>
+                          <Text as="p" variant="bodySm" tone="subdued">
+                            <strong>Oluşturulma:</strong> {formatDate(quiz.created_at)}
+                          </Text>
+                        </InlineStack>
+
+                        {/* Quiz Settings Info */}
+                        <InlineStack gap="200">
+                          {quiz.auto_transition && (
+                            <Badge tone="info">
+                              Otomatik Geçiş
+                            </Badge>
+                          )}
+                          {quiz.selected_collections && quiz.selected_collections.length > 0 && (
+                            <Badge tone="success">
+                              {`${quiz.selected_collections.length} Koleksiyon`}
+                            </Badge>
+                          )}
+                        </InlineStack>
                       </BlockStack>
-                      
-                      {/* Action Buttons */}
+                    </div>
+                    
+                    {/* Action Buttons - Sağ taraf */}
+                    <div style={{ minWidth: '160px' }}>
                       <InlineStack gap="200">
                         {onEditQuiz && (
                           <Button
-                            size="micro"
+                            size="slim"
                             loading={loadingStates[quiz.id]}
                             disabled={loadingStates[quiz.id]}
                             onClick={async () => {
@@ -208,7 +269,7 @@ export default function QuizList({ onEditQuiz, onDeleteQuiz }: QuizListProps) {
                         )}
                         {onDeleteQuiz && (
                           <Button
-                            size="micro"
+                            size="slim"
                             variant="primary"
                             tone="critical"
                             onClick={() => onDeleteQuiz(quiz.id)}
@@ -217,38 +278,8 @@ export default function QuizList({ onEditQuiz, onDeleteQuiz }: QuizListProps) {
                           </Button>
                         )}
                       </InlineStack>
-                    </InlineStack>
-
-                    {/* Quiz Details */}
-                    <InlineStack gap="400">
-                      <Text as="p" variant="bodySm">
-                        <strong>Tür:</strong> {getQuizTypeLabel(quiz.quiz_type)}
-                      </Text>
-                      <Text as="p" variant="bodySm">
-                        <strong>Soru:</strong> {quiz.questionCount}
-                      </Text>
-                      <Text as="p" variant="bodySm">
-                        <strong>Cevap:</strong> {quiz.answerCount}
-                      </Text>
-                      <Text as="p" variant="bodySm" tone="subdued">
-                        <strong>Oluşturulma:</strong> {formatDate(quiz.created_at)}
-                      </Text>
-                    </InlineStack>
-
-                    {/* Quiz Settings Info */}
-                    <InlineStack gap="200">
-                      {quiz.auto_transition && (
-                        <Badge tone="info">
-                          Otomatik Geçiş
-                        </Badge>
-                      )}
-                      {quiz.selected_collections && quiz.selected_collections.length > 0 && (
-                        <Badge tone="success">
-                          {`${quiz.selected_collections.length} Koleksiyon`}
-                        </Badge>
-                      )}
-                    </InlineStack>
-                  </BlockStack>
+                    </div>
+                  </InlineStack>
                 </Box>
 
                 {/* Divider between quizzes */}

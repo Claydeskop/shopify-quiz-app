@@ -17,6 +17,24 @@ import QuizBuilder from '../components/QuizBuilder';
 import QuizList from '../components/QuizList';
 import type { Quiz, QuizFormData } from '@/types';
 
+// Admin panel security check
+function AdminSecurityCheck() {
+  useEffect(() => {
+    // Check if we're in Shopify context
+    const urlParams = new URLSearchParams(window.location.search);
+    const shop = urlParams.get('shop');
+    const embedded = urlParams.get('embedded');
+    
+    // If not in Shopify context and in production, redirect or block
+    if (!shop && !embedded && process.env.NODE_ENV === 'production') {
+      document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Arial;"><h1>Unauthorized Access</h1><p>This admin panel can only be accessed through Shopify.</p></div>';
+      return;
+    }
+  }, []);
+  
+  return null;
+}
+
 interface QuizBuilderRef {
   getQuizData: () => QuizFormData;
   saveQuiz: () => Promise<void>;
@@ -375,6 +393,10 @@ function SearchParamsComponent() {
     // Production mode - require host/shop params
     if (!stableHost || !stableShop) {
       console.error('Missing required host or shop parameters');
+      // Redirect to Shopify OAuth in production
+      if (process.env.NODE_ENV === 'production') {
+        window.location.href = '/api/auth/shopify';
+      }
       return;
     }
 
@@ -423,18 +445,21 @@ function SearchParamsComponent() {
 
 export default function HomePage() {
   return (
-    <Suspense fallback={
-      <AppProvider i18n={enTranslations}>
-        <Page title="Loading...">
-          <Card>
-            <Box padding="400">
-              <Text as="p">Loading...</Text>
-            </Box>
-          </Card>
-        </Page>
-      </AppProvider>
-    }>
-      <SearchParamsComponent />
-    </Suspense>
+    <>
+      <AdminSecurityCheck />
+      <Suspense fallback={
+        <AppProvider i18n={enTranslations}>
+          <Page title="Loading...">
+            <Card>
+              <Box padding="400">
+                <Text as="p">Loading...</Text>
+              </Box>
+            </Card>
+          </Page>
+        </AppProvider>
+      }>
+        <SearchParamsComponent />
+      </Suspense>
+    </>
   );
 }

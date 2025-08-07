@@ -39,8 +39,13 @@ export async function GET(
 
     const supabase = createClient();
 
-    // Quiz'i slug ile getir
-    const { data: quiz, error: quizError } = await supabase
+    console.log('Searching for quiz with slug:', slug);
+    
+    // Quiz'i önce slug ile getir, bulamazsa id ile dene
+    let quiz, quizError;
+    
+    // İlk olarak slug ile ara
+    const slugResult = await supabase
       .from('quizzes')
       .select(`
         *,
@@ -53,9 +58,36 @@ export async function GET(
       .eq('is_active', true)
       .single();
 
+    quiz = slugResult.data;
+    quizError = slugResult.error;
+
+    // Eğer slug ile bulunamazsa, id ile dene (backward compatibility)
     if (quizError || !quiz) {
+      console.log('Slug ile bulunamadı, ID ile deneniyor:', slug);
+      
+      const idResult = await supabase
+        .from('quizzes')
+        .select(`
+          *,
+          questions (
+            *,
+            answers (*)
+          )
+        `)
+        .eq('id', slug)
+        .eq('is_active', true)
+        .single();
+      
+      quiz = idResult.data;
+      quizError = idResult.error;
+    }
+
+    console.log('Quiz query result:', { quiz, quizError });
+
+    if (quizError || !quiz) {
+      console.error('Quiz not found error:', quizError);
       return NextResponse.json(
-        { error: 'Quiz not found or not active' },
+        { error: 'Quiz not found or not active', details: quizError?.message },
         { status: 404 }
       );
     }

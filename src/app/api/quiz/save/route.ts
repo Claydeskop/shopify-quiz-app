@@ -179,20 +179,28 @@ export async function POST(request: NextRequest) {
       questionIdMap[frontendQuestion.id] = savedQuestions[index].id;
     });
 
+    console.log('Question ID mapping:', questionIdMap);
+    console.log('Answers to save:', body.answers?.length || 0);
+    console.log('First few answers:', body.answers?.slice(0, 3));
+
     // Save answers
-    const answersToInsert = (body.answers || []).map((answer, index) => ({
-      question_id: questionIdMap[answer.questionId],
-      text: answer.text,
-      answer_media: answer.answer_media,
-      redirect_to_link: answer.redirect_to_link,
-      redirect_url: answer.redirect_url,
-      related_products: answer.products || [],
-      related_tags: answer.tags || [],
-      related_categories: answer.categories || [],
-      answer_order: index + 1,
-      is_default: false,
-      weight: 1
-    }));
+    const answersToInsert = (body.answers || []).map((answer, index) => {
+      const mappedQuestionId = questionIdMap[answer.questionId];
+      console.log(`Answer ${index}: questionId=${answer.questionId}, mapped to=${mappedQuestionId}`);
+      
+      return {
+        question_id: mappedQuestionId,
+        text: answer.text,
+        answer_media: answer.answer_media,
+        redirect_to_link: answer.redirect_to_link,
+        redirect_url: answer.redirect_url,
+        answer_order: index + 1,
+        is_default: false,
+        weight: 1
+      };
+    });
+
+    console.log('Final answers to insert:', answersToInsert);
 
     const { data: savedAnswers, error: answersError } = await supabase
       .from('answers')
@@ -213,7 +221,7 @@ export async function POST(request: NextRequest) {
 
     // Create mapping from frontend answer IDs to database answer IDs
     const answerIdMap: Record<string, string> = {};
-    body.answers.forEach((frontendAnswer, index) => {
+    (body.answers || []).forEach((frontendAnswer, index) => {
       answerIdMap[frontendAnswer.id] = savedAnswers[index].id;
     });
 
@@ -228,7 +236,7 @@ export async function POST(request: NextRequest) {
       expected_value: string;
       weight: number;
     }> = [];
-    body.answers.forEach((answer) => {
+    (body.answers || []).forEach((answer) => {
       if (answer.conditions && answer.conditions.length > 0) {
         answer.conditions.forEach((condition) => {
           if (condition.metafield && condition.value) {
@@ -267,7 +275,7 @@ export async function POST(request: NextRequest) {
       shopify_collection_id: string;
       collection_order: number;
     }> = [];
-    body.answers.forEach((answer) => {
+    (body.answers || []).forEach((answer) => {
       if (answer.collections && answer.collections.length > 0) {
         answer.collections.forEach((collection: ShopifyCollection, index: number) => {
           if (collection.id) {

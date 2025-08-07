@@ -269,12 +269,12 @@ export async function GET(
       id: quiz.id,
       title: quiz.title,
       quizType: quiz.quiz_type,
-      internalQuizTitle: quiz.internal_quiz_title || quiz.title,
-      internalQuizDescription: quiz.internal_quiz_description || quiz.description,
+      internal_quiz_title: quiz.internal_quiz_title,
+      internal_quiz_description: quiz.internal_quiz_description,
       is_active: quiz.is_active,
-      auto_transition: false, // Default value since field doesn't exist
-      selected_collections: [], // Default value since field doesn't exist  
-      quizImage: quiz.quiz_image,
+      auto_transition: quiz.auto_transition || false,
+      selected_collections: quiz.selected_collections || [],
+      quiz_image: quiz.quiz_image,
       styles: quiz.styles || {
         backgroundColor: '#2c5aa0',
         optionBackgroundColor: '#ffffff',
@@ -422,9 +422,6 @@ export async function PUT(
       answer_media: answer.answer_media,
       redirect_to_link: answer.redirect_to_link,
       redirect_url: answer.redirect_url,
-      related_products: answer.products || [],
-      related_tags: answer.tags || [],
-      related_categories: answer.categories || [],
       answer_order: index + 1,
       is_default: false,
       weight: 1
@@ -445,7 +442,7 @@ export async function PUT(
 
     // Handle metafield conditions and collections (similar to save route)
     const answerIdMap: Record<string, string> = {};
-    body.answers.forEach((frontendAnswer, index: number) => {
+    (body.answers || []).forEach((frontendAnswer, index: number) => {
       answerIdMap[frontendAnswer.id] = savedAnswers[index].id;
     });
 
@@ -460,7 +457,7 @@ export async function PUT(
       expected_value: string;
       weight: number;
     }> = [];
-    body.answers.forEach((answer) => {
+    (body.answers || []).forEach((answer) => {
       if (answer.conditions && answer.conditions.length > 0) {
         answer.conditions.forEach((condition) => {
           if (condition.metafield && condition.value) {
@@ -489,7 +486,7 @@ export async function PUT(
       shopify_collection_id: string;
       collection_order: number;
     }> = [];
-    body.answers.forEach((answer) => {
+    (body.answers || []).forEach((answer) => {
       if (answer.collections && answer.collections.length > 0) {
         answer.collections.forEach((collection, index: number) => {
           if (collection.id) {

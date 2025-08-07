@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import Image from 'next/image';
-import { ShopifyCollection, StyleSettings as MainStyleSettings } from '../../types';
+import { useEffect, useState } from 'react';
+import { ShopifyCollection } from '../../types';
 
 interface Question {
   id: string;
@@ -85,7 +85,11 @@ export default function StandaloneQuiz({
     customCSS: ''
   };
 
-  const currentStyles = { ...defaultStyles, ...(quiz?.style_settings || {}) };
+  // Veritabanından gelen styles'ı kullan
+  const currentStyles = quiz?.style_settings ? { 
+    ...defaultStyles, 
+    ...quiz.style_settings 
+  } : defaultStyles;
 
   useEffect(() => {
     fetchQuiz();
@@ -711,20 +715,31 @@ export default function StandaloneQuiz({
             onClick={onClose}
             style={{
               position: 'absolute',
-              top: '-50px',
-              right: '0',
-              background: 'rgba(255,255,255,0.2)',
-              border: 'none',
+              top: '10px',
+              right: '10px',
+              background: 'rgba(0,0,0,0.8)',
+              border: '2px solid white',
               borderRadius: '50%',
-              width: '40px',
-              height: '40px',
+              width: '44px',
+              height: '44px',
               color: 'white',
-              fontSize: '1.5rem',
+              fontSize: '24px',
+              fontWeight: 'bold',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              transition: 'all 0.3s ease'
+              transition: 'all 0.3s ease',
+              zIndex: 1000,
+              boxShadow: '0 4px 15px rgba(0,0,0,0.3)'
+            }}
+            onMouseEnter={(e) => {
+              (e.target as HTMLElement).style.background = 'rgba(0,0,0,0.9)';
+              (e.target as HTMLElement).style.transform = 'scale(1.05)';
+            }}
+            onMouseLeave={(e) => {
+              (e.target as HTMLElement).style.background = 'rgba(0,0,0,0.8)';
+              (e.target as HTMLElement).style.transform = 'scale(1)';
             }}
           >
             ×

@@ -189,6 +189,7 @@ export interface QuizFormData {
   isActive: boolean;
   styles: StyleSettings;
   questions: Question[];
+  answers?: Answer[];
 }
 
 export interface ShopData {

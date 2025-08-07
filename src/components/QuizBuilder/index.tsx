@@ -449,6 +449,7 @@ const QuizBuilder = forwardRef<QuizBuilderRef, QuizBuilderProps>((props, ref) =>
     const active = quizData.is_active || false;
     
     console.log('Setting quiz state:', { title, description, image, active });
+    console.log('Full quizData received:', quizData);
     
     setInternalQuizTitle(title);
     setInternalQuizDescription(description);
@@ -541,6 +542,18 @@ const QuizBuilder = forwardRef<QuizBuilderRef, QuizBuilderProps>((props, ref) =>
   // Expose methods to parent component
   useImperativeHandle(ref, () => ({
     getQuizData: () => {
+      // Flatten all answers from questions into a single array
+      const allAnswers = questions.flatMap(question => 
+        question.answers.map(answer => ({
+          ...answer,
+          questionId: question.id
+        }))
+      );
+      
+      console.log('getQuizData - Questions:', questions.length);
+      console.log('getQuizData - All answers:', allAnswers.length);
+      console.log('getQuizData - First few answers:', allAnswers.slice(0, 3));
+      
       return {
         title: props.quizTitle,
         description: undefined,
@@ -549,7 +562,8 @@ const QuizBuilder = forwardRef<QuizBuilderRef, QuizBuilderProps>((props, ref) =>
         quizImage,
         isActive,
         styles: styleSettings,
-        questions: questions
+        questions: questions,
+        answers: allAnswers
       };
     },
     saveQuiz: handleSaveQuiz,
